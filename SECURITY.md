@@ -72,10 +72,10 @@ only when **all** of:
 - CI's `build` check is green (status checks are **not** bypassed, only the review requirement).
 
 In EpsilonEridani production, review generation and auto-merge are independent. The `Review` workflow's
-enabled state plus the `CI_REVIEW_ENABLED` repository variable on `TauCetiProject/TauCeti` control
+enabled state plus the `CI_REVIEW_ENABLED` repository variable on `eic/TauCeti` control
 metered review generation; disabling it does not pause scoreboard-driven merging. The reusable
 review workflow's `enable_automerge` input is not the production merge path. To pause automated
-merging, disable both the `Auto-merge` and `Merge sweep` workflows in `TauCetiProject/TauCeti`; both
+merging, disable both the `Auto-merge` and `Merge sweep` workflows in `eic/TauCeti`; both
 must be re-enabled to resume normal operation.
 
 ## Residual risks (knowingly accepted)

@@ -27,9 +27,9 @@ GitHub login successfully requested the #7077 update. These are separate from
 
 ## One-time settings
 
-1. Open https://github.com/organizations/TauCetiProject/settings/apps/epsiloneridani-review-bot/permissions
+1. Open https://github.com/organizations/eic/settings/apps/epsiloneridani-review-bot/permissions
 2. Set **Repository permissions → Workflows → Read and write**, then **Save changes**.
-3. Open https://github.com/organizations/TauCetiProject/settings/installations/143500674
+3. Open https://github.com/organizations/eic/settings/installations/143500674
 4. Click **Review request → Accept new permissions**, if pending.
 
 ## Verification

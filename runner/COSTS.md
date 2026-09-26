@@ -99,7 +99,7 @@ epsiloneridani-review-costs graph --out g.svg         # dependency-free SVG (4 p
 ```
 
 Defaults: DB and graph live under `~/.cache/epsiloneridani-review/`; `--repo` is
-`TauCetiProject/TauCeti`; `--store` defaults to that repo's store slug. PR author
+`eic/TauCeti`; `--store` defaults to that repo's store slug. PR author
 is read from the body trailer (`🤖 Prepared with Codex` / `Claude Code`), since
 commits land under the contributor's account.
 

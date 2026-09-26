@@ -41,9 +41,9 @@ import uuid
 # reason to arrange). tests/test_provider_down.py pins the two definitions together.
 PROVIDER_DOWN_EXIT = 3
 
-REVIEW_REPO = "TauCetiProject/TauCetiReview"
-DEFAULT_CODE_REPO = "TauCetiProject/TauCeti"
-DEFAULT_ROADMAP_REPO = "TauCetiProject/TauCetiRoadmap"
+REVIEW_REPO = "eic/TauCetiReview"
+DEFAULT_CODE_REPO = "eic/TauCeti"
+DEFAULT_ROADMAP_REPO = "eic/TauCetiRoadmap"
 CACHE_DIR = pathlib.Path(
     os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))) / "epsiloneridani-review"
 

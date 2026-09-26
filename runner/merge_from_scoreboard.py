@@ -233,7 +233,7 @@ def resolve_commit_status(repo, head_sha, context):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--repo", default="TauCetiProject/TauCeti")
+    ap.add_argument("--repo", default="eic/TauCeti")
     ap.add_argument("--pr", required=True)
     ap.add_argument("--head-sha", required=True)
     ap.add_argument("--comments-file", required=True, help="JSON array of the PR's issue comments")

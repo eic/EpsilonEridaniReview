@@ -40,18 +40,18 @@ jobs:
       - name: Checkout review repo (runner + rubrics)
         uses: actions/checkout@v4
         with:
-          repository: TauCetiProject/TauCetiReview
+          repository: eic/TauCetiReview
           ref: ${{ inputs.review_ref }}
           persist-credentials: false
 
       - name: Resolve PR head and fetch diff
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
-          HEAD_SHA=$(gh pr view "$PR" --repo TauCetiProject/TauCeti --json headRefOid -q .headRefOid)
+          HEAD_SHA=$(gh pr view "$PR" --repo eic/TauCeti --json headRefOid -q .headRefOid)
           echo "HEAD_SHA=$HEAD_SHA" >> "$GITHUB_ENV"
-          BASE_SHA=$(gh pr view "$PR" --repo TauCetiProject/TauCeti --json baseRefOid -q .baseRefOid)
+          BASE_SHA=$(gh pr view "$PR" --repo eic/TauCeti --json baseRefOid -q .baseRefOid)
           echo "BASE_SHA=$BASE_SHA" >> "$GITHUB_ENV"
-          MERGE_BASE=$(gh api "/repos/TauCetiProject/TauCeti/compare/${BASE_SHA}...${HEAD_SHA}" \
+          MERGE_BASE=$(gh api "/repos/eic/TauCeti/compare/${BASE_SHA}...${HEAD_SHA}" \
             --jq '.merge_base_commit.sha' 2>/dev/null || echo "")
           echo "MERGE_BASE=$MERGE_BASE" >> "$GITHUB_ENV"
           echo "RUBRICS_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
@@ -60,13 +60,13 @@ jobs:
           # the job CheckRun (whose name differs — bump-guard's job is "guard"). Missing -> "" -> the
           # engine refuses to merge. Posted by the trusted base-repo CI; external authors cannot write
           # statuses to the base repo.
-          CI_BUILD=$(gh pr view "$PR" --repo TauCetiProject/TauCeti --json statusCheckRollup \
+          CI_BUILD=$(gh pr view "$PR" --repo eic/TauCeti --json statusCheckRollup \
             -q '[.statusCheckRollup[]? | select(.__typename=="StatusContext" and .context=="build") | .state] | first // ""')
           echo "CI_BUILD=$CI_BUILD" >> "$GITHUB_ENV"
-          BUMP_GUARD=$(gh pr view "$PR" --repo TauCetiProject/TauCeti --json statusCheckRollup \
+          BUMP_GUARD=$(gh pr view "$PR" --repo eic/TauCeti --json statusCheckRollup \
             -q '[.statusCheckRollup[]? | select(.__typename=="StatusContext" and .context=="bump-guard") | .state] | first // ""')
           echo "BUMP_GUARD=$BUMP_GUARD" >> "$GITHUB_ENV"
-          SCOPE=$(gh pr view "$PR" --repo TauCetiProject/TauCeti --json statusCheckRollup \
+          SCOPE=$(gh pr view "$PR" --repo eic/TauCeti --json statusCheckRollup \
             -q '[.statusCheckRollup[]? | select(.__typename=="StatusContext" and .context=="scope") | .state] | first // ""')
           echo "SCOPE=$SCOPE" >> "$GITHUB_ENV"
           # The merge base binds a scoreboard to the diff it reviewed (retargeting the PR or
@@ -77,7 +77,7 @@ jobs:
           fi
           # The changed paths of exactly HEAD_SHA, machine-read with git (runner/pr_diff.py) rather
           # than parsed from `gh pr diff`, which refuses PRs touching more than 300 files.
-          python3 runner/pr_diff.py --repo TauCetiProject/TauCeti --pr "$PR" \
+          python3 runner/pr_diff.py --repo eic/TauCeti --pr "$PR" \
             --head-sha "$HEAD_SHA" --merge-base-sha "$MERGE_BASE" --paths-out paths.z
           echo "changed paths: $(tr -cd '\0' < paths.z | wc -c)"
 
@@ -96,7 +96,7 @@ jobs:
           # `--paginate` with a non-array --jq
           # emits one JSON object per line (JSONL), concatenated across pages (a bare --paginate would
           # concatenate per-page arrays into invalid JSON; --slurp can't combine with --jq).
-          gh api --paginate "repos/TauCetiProject/TauCeti/issues/$PR/comments" \
+          gh api --paginate "repos/eic/TauCeti/issues/$PR/comments" \
             --jq '.[] | {body, updated_at, created_at}' > comments.json
           echo "fetched $(wc -l < comments.json) comment(s) for #$PR"
 
@@ -109,7 +109,7 @@ jobs:
           # TauCeti/-only + allowed root/pins, bump-guard for a pin). Reads the full `states` from the meta, falling back
           # to the rendered table for comments posted before that field existed.
           python3 runner/merge_from_scoreboard.py \
-            --repo TauCetiProject/TauCeti --pr "$PR" --head-sha "$HEAD_SHA" --comments-file comments.json \
+            --repo eic/TauCeti --pr "$PR" --head-sha "$HEAD_SHA" --comments-file comments.json \
             --merge-base-sha "$MERGE_BASE" --paths-file paths.z --ci-build "$CI_BUILD" --bump-guard "$BUMP_GUARD" --scope "$SCOPE" \
             --merge-decision-file "$PWD/merge.json"
 
@@ -121,7 +121,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: TauCetiProject
+          owner: eic
           repositories: TauCeti
           permission-contents: write
           permission-pull-requests: write
@@ -129,11 +129,11 @@ jobs:
       - name: Reconcile the merge queue
         env:
           GH_TOKEN: "${{ steps.merge_token.outputs.token }}"
-          REPO: TauCetiProject/TauCeti
+          REPO: eic/TauCeti
         run: |
           set -euo pipefail
           # Re-read state immediately before either mutation and bind enqueue to the reviewed head.
-          read -r CUR_HEAD PRID < <(gh pr view "$PR" --repo TauCetiProject/TauCeti \
+          read -r CUR_HEAD PRID < <(gh pr view "$PR" --repo eic/TauCeti \
             --json headRefOid,id -q '.headRefOid + " " + .id')
 
           dequeue() {
@@ -168,10 +168,10 @@ jobs:
           # read. Never aborts under `set -e`: a failed read must reach check_merge_base's dequeue.
           merge_base_now() {
             local base
-            base=$(gh pr view "$PR" --repo TauCetiProject/TauCeti --json baseRefOid \
+            base=$(gh pr view "$PR" --repo eic/TauCeti --json baseRefOid \
               -q .baseRefOid) || return 0
             [ -n "$base" ] || return 0
-            gh api "/repos/TauCetiProject/TauCeti/compare/${base}...${HEAD_SHA}?per_page=1" \
+            gh api "/repos/eic/TauCeti/compare/${base}...${HEAD_SHA}?per_page=1" \
               --jq '.merge_base_commit.sha // ""' || true
           }
 
@@ -218,7 +218,7 @@ jobs:
           PIN_MOVING=0
           # REST + --paginate, not `gh pr view --json files`: a bump changes more than one page of
           # files (143 for v4.34.0-rc1), and a truncated list would read as "not pin-moving".
-          if gh api --paginate "/repos/TauCetiProject/TauCeti/pulls/$PR/files?per_page=100" \
+          if gh api --paginate "/repos/eic/TauCeti/pulls/$PR/files?per_page=100" \
                --jq '.[].filename' | grep -qxE 'lake-manifest\.json|lean-toolchain'; then
             PIN_MOVING=1
           fi

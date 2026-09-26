@@ -574,7 +574,7 @@ def merge_decision(a, states, candidates, all_green, head):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--repo", default="TauCetiProject/TauCeti")
+    ap.add_argument("--repo", default="eic/TauCeti")
     ap.add_argument("--pr", required=True)
     ap.add_argument("--rubrics", default=",".join(DEFAULT_RUBRICS))
     ap.add_argument("--rubrics-dir", required=True)
@@ -607,7 +607,7 @@ def main():
     ap.add_argument("--merge-base-sha", default="",
                     help="merge base of base and head — the actual left side of the reviewed "
                          "three-dot diff (runner/pr_diff.py). Recorded as provenance")
-    ap.add_argument("--rubrics-repo", default="TauCetiProject/TauCetiReview",
+    ap.add_argument("--rubrics-repo", default="eic/TauCetiReview",
                     help="owner/name the pinned rubric links point into")
     ap.add_argument("--rubrics-sha", default="",
                     help="git commit SHA of the rubrics+engine checkout, for pinned rubric links "

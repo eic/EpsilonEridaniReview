@@ -36,7 +36,7 @@ jobs:
       - name: Checkout review repo (runner + rubrics, pinned)
         uses: actions/checkout@v4
         with:
-          repository: TauCetiProject/TauCetiReview
+          repository: eic/TauCetiReview
           ref: ${{ inputs.rubrics_sha }}
           persist-credentials: false
 
@@ -45,7 +45,7 @@ jobs:
       - name: Checkout the diff helper (this workflow's commit)
         uses: actions/checkout@v4
         with:
-          repository: TauCetiProject/TauCetiReview
+          repository: eic/TauCetiReview
           ref: ${{ github.sha }}
           path: .diff-helper
           sparse-checkout: runner/pr_diff.py
@@ -55,18 +55,18 @@ jobs:
       - name: Checkout roadmap (public)
         uses: actions/checkout@v4
         with:
-          repository: TauCetiProject/TauCetiRoadmap
+          repository: eic/TauCetiRoadmap
           path: roadmap
           persist-credentials: false
 
       - name: Resolve PR head and fetch diff
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
-          HEAD_SHA=$(gh pr view "$PR" --repo TauCetiProject/TauCeti --json headRefOid -q .headRefOid)
+          HEAD_SHA=$(gh pr view "$PR" --repo eic/TauCeti --json headRefOid -q .headRefOid)
           echo "HEAD_SHA=$HEAD_SHA" >> "$GITHUB_ENV"
-          BASE_SHA=$(gh pr view "$PR" --repo TauCetiProject/TauCeti --json baseRefOid -q .baseRefOid)
+          BASE_SHA=$(gh pr view "$PR" --repo eic/TauCeti --json baseRefOid -q .baseRefOid)
           echo "BASE_SHA=$BASE_SHA" >> "$GITHUB_ENV"
-          MERGE_BASE=$(gh api "/repos/TauCetiProject/TauCeti/compare/${BASE_SHA}...${HEAD_SHA}" \
+          MERGE_BASE=$(gh api "/repos/eic/TauCeti/compare/${BASE_SHA}...${HEAD_SHA}" \
             --jq '.merge_base_commit.sha' 2>/dev/null || echo "")
           echo "MERGE_BASE=$MERGE_BASE" >> "$GITHUB_ENV"
           # The merge base pins the reviewed diff and is what the merge gate later matches the
@@ -76,19 +76,19 @@ jobs:
             echo "::error::could not resolve the merge base of $BASE_SHA and $HEAD_SHA"; exit 1
           fi
           echo "RUBRICS_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-          CI_BUILD=$(gh pr view "$PR" --repo TauCetiProject/TauCeti --json statusCheckRollup \
+          CI_BUILD=$(gh pr view "$PR" --repo eic/TauCeti --json statusCheckRollup \
             -q '[.statusCheckRollup[]? | select(.__typename=="StatusContext" and .context=="build") | .state] | first // ""')
           echo "CI_BUILD=$CI_BUILD" >> "$GITHUB_ENV"
           # Same diff as review.yml, from the helper checked out above.
-          python3 .diff-helper/runner/pr_diff.py --repo TauCetiProject/TauCeti --pr "$PR" \
+          python3 .diff-helper/runner/pr_diff.py --repo eic/TauCeti --pr "$PR" \
             --head-sha "$HEAD_SHA" --merge-base-sha "$MERGE_BASE" --out diff.txt
-          gh pr view "$PR" --repo TauCetiProject/TauCeti --json title,body \
+          gh pr view "$PR" --repo eic/TauCeti --json title,body \
             --jq '"# " + .title + "\n\n" + (.body // "")' > pr_desc.txt
 
       - name: Checkout code at PR head (public, no credentials persisted)
         uses: actions/checkout@v4
         with:
-          repository: TauCetiProject/TauCeti
+          repository: eic/TauCeti
           ref: ${{ env.HEAD_SHA }}
           path: code
           persist-credentials: false
@@ -97,7 +97,7 @@ jobs:
         # Rev from the BASE repo's manifest, never the PR's (same rationale as review.yml).
         run: |
           base=$(mktemp -d)
-          git clone --depth 1 https://github.com/TauCetiProject/TauCeti "$base/base"
+          git clone --depth 1 https://github.com/eic/TauCeti "$base/base"
           MREV=$(jq -r '.packages[] | select(.name=="mathlib") | .rev' "$base/base/lake-manifest.json")
           git init -q mathlib
           git -C mathlib remote add origin https://github.com/leanprover-community/mathlib4
@@ -137,7 +137,7 @@ jobs:
           [ -n "${{ inputs.rubrics }}" ] && RUBRICS_ARGS="--rubrics ${{ inputs.rubrics }}"
           mkdir -p store
           python3 runner/review.py \
-            --repo TauCetiProject/TauCeti --pr "$PR" --mode manual \
+            --repo eic/TauCeti --pr "$PR" --mode manual \
             --shadow --arm "shadow:${LABEL}" $RUBRICS_ARGS \
             --rubrics-dir rubrics --tool-cwd "$REVROOT" \
             --code-path code --roadmap-path roadmap --mathlib-path mathlib \
@@ -156,7 +156,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: TauCetiProject
+          owner: eic
           repositories: EpsilonEridaniData
           permission-contents: write
 

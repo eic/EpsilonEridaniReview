@@ -33,17 +33,17 @@ With [uv](https://docs.astral.sh/uv/):
 
 ```bash
 # one-off, no install:
-uvx --from git+https://github.com/TauCetiProject/TauCetiReview epsiloneridani-review 42
+uvx --from git+https://github.com/eic/TauCetiReview epsiloneridani-review 42
 
 # or install the command:
-uv tool install git+https://github.com/TauCetiProject/TauCetiReview
+uv tool install git+https://github.com/eic/TauCetiReview
 epsiloneridani-review 42
 ```
 
 Or from a checkout (also how to hack on it):
 
 ```bash
-git clone https://github.com/TauCetiProject/TauCetiReview
+git clone https://github.com/eic/TauCetiReview
 cd TauCetiReview
 uv run epsiloneridani-review 42          # or: pipx install . / pip install .
 ```
@@ -78,7 +78,7 @@ Add `--post` to publish. Useful flags:
 | `--kiro-model MODEL` | exact Kiro model ID; defaults to `gpt-5.6-sol`. Use `claude-opus-5` for Kiro's current Opus |
 | `--mode commit` | review only rubrics not already passing in the local store (default `manual` = all) |
 | `--no-mathlib` | skip fetching pinned Mathlib source; `reuse`/`naming` can't grep Mathlib |
-| `--repo owner/name` | review a different repo (default `TauCetiProject/TauCeti`) |
+| `--repo owner/name` | review a different repo (default `eic/TauCeti`) |
 | `--auth api` | use the matching `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `KIRO_API_KEY` instead of a browser login |
 | `--keep` | keep the temporary workspace for inspection |
 

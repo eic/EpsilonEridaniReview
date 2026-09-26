@@ -39,7 +39,7 @@ jobs:
       - name: Checkout review repo (runner)
         uses: actions/checkout@v4
         with:
-          repository: TauCetiProject/TauCetiReview
+          repository: eic/TauCetiReview
           ref: ${{ inputs.review_ref }}
           persist-credentials: false
 
@@ -56,7 +56,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: TauCetiProject
+          owner: eic
           repositories: TauCeti
           permission-contents: write
           permission-pull-requests: write
@@ -66,6 +66,6 @@ jobs:
       - name: Re-drive evicted green PRs
         env:
           GH_TOKEN: ${{ steps.merge_token.outputs.token }}
-          REPO: TauCetiProject/TauCeti
+          REPO: eic/TauCeti
           DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
         run: python3 runner/sweep.py

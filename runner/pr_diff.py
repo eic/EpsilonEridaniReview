@@ -34,7 +34,7 @@ rewrite, external diff driver or textconv applies. The PR's own `.gitattributes`
 (no work tree and an unborn HEAD leave no tree to read it from), so a PR cannot hide a change from
 the reviewer by marking it `-diff`.
 
-    pr_diff.py --repo TauCetiProject/TauCeti --pr 123 --head-sha <sha> --merge-base-sha <sha> \
+    pr_diff.py --repo eic/TauCeti --pr 123 --head-sha <sha> --merge-base-sha <sha> \
         --out diff.txt --paths-out paths.z
 
 Flat imports only (run as a script with runner/ on sys.path, or imported by sweep.py).
