@@ -3,7 +3,7 @@
 
 Three data sources, picked automatically:
 
-  * **data** (canonical) — a TauCetiData checkout, the durable/public/append-only
+  * **data** (canonical) — a EpsilonEridaniData checkout, the durable/public/append-only
     archive: ``records/runs/<pr>/<run_id>.json`` with a full ``usage`` block,
     ``started_at``, ``model`` and ``cost_usd``. Reproducible by anyone; defaults to
     the production arm and de-dupes by ``dedupe_key``. ``--source data --data-dir``.
@@ -268,13 +268,13 @@ def ingest_store(con: sqlite3.Connection, store: Path) -> tuple[int, int]:
 
 
 def ingest_data(con: sqlite3.Connection, data_dir: Path, include_shadows: bool = False) -> tuple[int, int]:
-    """Read the durable public archive (a TauCetiData checkout): records/runs/<pr>/<run_id>.json.
-    This is the reproducible source — anyone can clone TauCetiData and get the same numbers,
+    """Read the durable public archive (a EpsilonEridaniData checkout): records/runs/<pr>/<run_id>.json.
+    This is the reproducible source — anyone can clone EpsilonEridaniData and get the same numbers,
     independent of a local cache. Defaults to the production arm (the reviews that gated PRs);
     pass include_shadows to also count the archived A/B experiment arms."""
     runs = data_dir / "records" / "runs"
     if not runs.is_dir():
-        raise FileNotFoundError(f"no records/runs under {data_dir} (clone TauCetiProject/TauCetiData)")
+        raise FileNotFoundError(f"no records/runs under {data_dir} (clone eic/EpsilonEridaniData)")
     con.execute("DELETE FROM rubric_runs")
     con.execute("DELETE FROM review_rounds WHERE source='data'")
     history = load_history()
@@ -390,9 +390,9 @@ def ingest(con, source, store, logs_dir, data_dir=None, include_shadows=False, r
         chosen = "data" if have_data else "store" if have_store else "logs"
     if chosen == "data":
         if data_dir is None:
-            raise SystemExit("data source needs --data-dir (a TauCetiData checkout)")
+            raise SystemExit("data source needs --data-dir (a EpsilonEridaniData checkout)")
         rounds, rubrics = ingest_data(con, data_dir, include_shadows)
-        return f"data: {rounds} rounds / {rubrics} rubric runs from TauCetiData (tokens + $)"
+        return f"data: {rounds} rounds / {rubrics} rubric runs from EpsilonEridaniData (tokens + $)"
     if chosen == "store":
         rounds, rubrics = ingest_store(con, store)
         return f"store: {rounds} rounds / {rubrics} rubric runs (tokens + $)"
@@ -799,7 +799,7 @@ def main(argv=None):
     p.add_argument("--store", type=Path, default=None,
                    help="review-engine store dir (default ~/.cache/epsiloneridani-review/store/<repo>)")
     p.add_argument("--data-dir", type=Path, default=None,
-                   help="TauCetiData checkout — the durable, public, reproducible source")
+                   help="EpsilonEridaniData checkout — the durable, public, reproducible source")
     p.add_argument("--source", choices=["auto", "data", "store", "logs"], default="auto")
     p.add_argument("--include-shadows", action="store_true",
                    help="(data source) also count archived A/B shadow-arm runs")

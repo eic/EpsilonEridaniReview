@@ -482,25 +482,25 @@ def main():
                          "right after a push so a propagation lag can't make the review run against "
                          "a stale head")
     ap.add_argument("--no-archive", action="store_true",
-                    help="skip writing durable archive records (and the TauCetiData sync). "
+                    help="skip writing durable archive records (and the EpsilonEridaniData sync). "
                          "Default: every run is archived to <store>/outbox and synced")
     ap.add_argument("--no-sync", action="store_true",
-                    help="archive records to <store>/outbox but do NOT push them to TauCetiData. "
+                    help="archive records to <store>/outbox but do NOT push them to EpsilonEridaniData. "
                          "Use when a trusted caller drains the outbox afterwards with --sync-only, "
                          "e.g. a network-restricted review bubble whose host syncs for it.")
     ap.add_argument("--sync-only", action="store_true",
-                    help="do not review: just drain <store>/outbox into TauCetiData and exit "
+                    help="do not review: just drain <store>/outbox into EpsilonEridaniData and exit "
                          "(nonzero exit on push failure). Pairs with a prior --no-sync run.")
     ap.add_argument("--submitted-by", default="",
                     help="GitHub login to stamp on records as the publisher (metadata only — NOT "
                          "part of any record's content identity/hash). Default: the gh-authenticated "
                          "login, or $GITHUB_ACTOR in CI.")
     ap.add_argument("--data-dir", default="",
-                    help="TauCetiData checkout the archive sync pushes through "
+                    help="EpsilonEridaniData checkout the archive sync pushes through "
                          "(default: a cached clone under the cache dir)")
     ap.add_argument("--shadow", action="store_true",
                     help="run an A/B arm: same PR, same diff, but the results are only archived "
-                         "to TauCetiData — nothing is posted and the production review state is "
+                         "to EpsilonEridaniData — nothing is posted and the production review state is "
                          "untouched (scratch store). Requires --label; combine with --reviewer "
                          "and/or --rubrics-sha to vary the arm")
     ap.add_argument("--label", default="",
@@ -529,7 +529,7 @@ def main():
     # unpriced model only after workspace setup and the Mathlib fetch.
     a.claude_model = (a.claude_model or "").strip() or None
 
-    # --sync-only: no review, just drain an existing store's outbox into TauCetiData and exit. The
+    # --sync-only: no review, just drain an existing store's outbox into EpsilonEridaniData and exit. The
     # host runs this after a --no-sync review (e.g. a bubble) to publish with its own creds. Loud:
     # `run` (no allow_fail) exits nonzero if archive.py sync fails after its retries.
     if a.sync_only:
@@ -541,7 +541,7 @@ def main():
             print("epsiloneridani-review --sync-only: outbox empty; nothing to sync")
             return
         repo_dir = engine_at(a.rubrics_sha) if a.rubrics_sha else resolve_repo_dir(a.repo_dir)
-        data_dir = a.data_dir or str(CACHE_DIR / "data" / "TauCetiData")
+        data_dir = a.data_dir or str(CACHE_DIR / "data" / "EpsilonEridaniData")
         run([sys.executable, str(repo_dir / "runner" / "archive.py"), "sync",
              "--store", str(a.store), "--data-dir", data_dir])
         return
@@ -810,12 +810,12 @@ def main():
         print("dry run — nothing posted. Re-run with --post to publish this review.",
               file=sys.stderr)
 
-    # Drain the archive outbox into TauCetiData. Best-effort by design: a push outage keeps the
+    # Drain the archive outbox into EpsilonEridaniData. Best-effort by design: a push outage keeps the
     # records in <store>/outbox, and the next run (or `archive.py sync` / `--sync-only`) lands them.
     # --no-sync skips this push: the records stay in the outbox for a trusted caller (the worker
     # host) to drain with --sync-only, which is how a network-restricted bubble publishes.
     if outbox and not a.no_sync and pathlib.Path(outbox).is_dir():
-        data_dir = a.data_dir or str(CACHE_DIR / "data" / "TauCetiData")
+        data_dir = a.data_dir or str(CACHE_DIR / "data" / "EpsilonEridaniData")
         r = run([sys.executable, str(repo_dir / "runner" / "archive.py"), "sync",
                  "--store", str(outbox_store), "--data-dir", data_dir], allow_fail=True)
         if r.returncode != 0:

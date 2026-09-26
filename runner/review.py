@@ -34,7 +34,7 @@ DEFAULT_RUBRICS = ["correctness", "reuse", "scope", "attribution", "api-design",
                    "generality", "placement", "naming", "documentation", "proof-quality"]
 
 # Fields that must never be written to a record this runner persists. BOTH sinks are public: the
-# archive record goes to TauCetiData, and `--store` is a checkout of this repo's `reviews` branch
+# archive record goes to EpsilonEridaniData, and `--store` is a checkout of this repo's `reviews` branch
 # which the review workflow commits and pushes. Raw stderr is arbitrary provider output and can carry
 # a key fragment, an authorization header, or a quoted request; a session id names a transcript. They
 # are stripped recursively, so a field added to an attempt cannot start publishing either by accident.
@@ -617,7 +617,7 @@ def main():
                          "than the actual checkout)")
     ap.add_argument("--archive-dir", default="",
                     help="outbox directory (usually <store>/outbox): write one durable archive "
-                         "record per run and per round here, for a later sync to TauCetiData. "
+                         "record per run and per round here, for a later sync to EpsilonEridaniData. "
                          "Empty disables archiving")
     ap.add_argument("--arm", default="production",
                     help="experiment arm recorded on archive records: production, or "

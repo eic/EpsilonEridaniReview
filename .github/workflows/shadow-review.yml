@@ -1,7 +1,7 @@
 name: shadow-review
 
 # An A/B arm in CI: review a PR with a chosen provider set and a pinned rubrics+engine commit,
-# archive the records to TauCetiData, and post NOTHING. The reviewer phase mirrors review.yml
+# archive the records to EpsilonEridaniData, and post NOTHING. The reviewer phase mirrors review.yml
 # (tokenless, isolated keys, read-only); there is no post step, no store-branch commit, and no
 # auto-merge — structurally nothing that can touch the live PR.
 on:
@@ -149,7 +149,7 @@ jobs:
             --providers "${{ inputs.providers }}" --keys-dir "$RUNNER_TEMP/keys"
 
       # ---- Trusted phase: archive only. No PR-facing token is ever minted in this workflow ----
-      - name: Mint archive token (TauCetiData contents:write)
+      - name: Mint archive token (EpsilonEridaniData contents:write)
         id: archive_token
         if: always()
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1; v1 ignores permission-* inputs
@@ -157,16 +157,16 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: TauCetiProject
-          repositories: TauCetiData
+          repositories: EpsilonEridaniData
           permission-contents: write
 
-      - name: Sync archive to TauCetiData
+      - name: Sync archive to EpsilonEridaniData
         id: sync
         if: always()
         env: { TOKEN: "${{ steps.archive_token.outputs.token }}" }
         run: |
           python3 runner/archive.py sync --store store --data-dir "$RUNNER_TEMP/epsiloneridani-data" \
-            --remote "https://x-access-token:${TOKEN}@github.com/TauCetiProject/TauCetiData"
+            --remote "https://x-access-token:${TOKEN}@github.com/eic/EpsilonEridaniData"
 
       - name: Keep outbox as an artifact if the sync failed
         # The scratch store dies with the runner; a failed sync must not lose the arm's records.

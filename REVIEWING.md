@@ -101,8 +101,8 @@ Add `--post` to publish. Useful flags:
 
 The posted scoreboard is the live verdict consumed by auto-merge: both merge paths read the newest
 marked scoreboard and require it to name the current head. The engine also writes detailed records
-for the TauCetiData analytics/provenance archive, but archive publication is not part of the merge
-gate and a contributor needs no TauCetiData write access for a posted review to count.
+for the EpsilonEridaniData analytics/provenance archive, but archive publication is not part of the merge
+gate and a contributor needs no EpsilonEridaniData write access for a posted review to count.
 
 ## Notes
 
@@ -141,7 +141,7 @@ gate and a contributor needs no TauCetiData write access for a posted review to 
 ## Shadow reviews (A/B arms)
 
 A shadow review runs the same PR through alternative rubrics and/or models, archives the
-results to [TauCetiData](https://github.com/TauCetiProject/TauCetiData), and posts **nothing**
+results to [EpsilonEridaniData](https://github.com/eic/EpsilonEridaniData), and posts **nothing**
 — the PR thread and the production review state are untouched. This is how review variants are
 evaluated against each other before being adopted.
 
@@ -152,5 +152,5 @@ evaluated against each other before being adopted.
 so an arm reruns exactly the code that existed then. Arms always run every requested rubric
 fresh (`--mode manual` semantics, scratch store, no carried-forward case files) so that two
 arms over the same `(PR, head, rubric)` are comparable; records land with `arm: shadow:<label>`
-and pair up with the production run in TauCetiData's `ab_pairs` view. In CI, the
+and pair up with the production run in EpsilonEridaniData's `ab_pairs` view. In CI, the
 `shadow-review` workflow (manual dispatch) does the same with API keys and a per-run budget.

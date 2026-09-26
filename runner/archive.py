@@ -3,7 +3,7 @@
 
 Reviews are durable the moment they finish: the runner writes one JSON record per execution
 into a local OUTBOX (`<store>/outbox/`), and a separate sync step drains the outbox into a
-checkout of TauCetiProject/TauCetiData (write-if-absent, commit, rebase, push). The split is
+checkout of eic/EpsilonEridaniData (write-if-absent, commit, rebase, push). The split is
 load-bearing: a data-repo push outage must never fail an otherwise-good review, and in CI the
 outbox rides along in the reviews-branch store commit, so an unsynced record survives the
 runner and syncs on a later run.
@@ -27,7 +27,7 @@ import shutil
 import subprocess
 import sys
 
-DATA_REPO = "TauCetiProject/TauCetiData"
+DATA_REPO = "eic/EpsilonEridaniData"
 
 # Conservative scrubbing for blob text that may quote tool/CLI output: known credential shapes
 # and home paths. Records themselves never carry these fields, so this is defense in depth.
@@ -196,7 +196,7 @@ def _drain(outbox, srcs):
 
 
 def sync(outbox, data_dir, remote="", retries=5):
-    """Drain the outbox into a TauCetiData checkout and push.
+    """Drain the outbox into a EpsilonEridaniData checkout and push.
 
     Each attempt rebuilds the working branch on origin/main (fetch -> reset) instead of rebasing
     local commits onto it. The outbox is the source of truth and records are write-if-absent, so
@@ -252,7 +252,7 @@ def sync(outbox, data_dir, remote="", retries=5):
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("sync", help="drain <store>/outbox into a TauCetiData checkout and push")
+    s = sub.add_parser("sync", help="drain <store>/outbox into a EpsilonEridaniData checkout and push")
     s.add_argument("--store", required=True)
     s.add_argument("--data-dir", required=True)
     s.add_argument("--remote", default="",

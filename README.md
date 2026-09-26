@@ -39,13 +39,13 @@ uvx --from git+https://github.com/TauCetiProject/TauCetiReview epsiloneridani-re
 
 With `--post`, the scoreboard comment is the live review verdict: EpsilonEridani's auto-merge workflows
 read the newest marked comment and require it to name the current head. Uploading the detailed run
-records to TauCetiData is separate archival for analytics and provenance; it does not determine
+records to EpsilonEridaniData is separate archival for analytics and provenance; it does not determine
 whether a posted review counts.
 
 ## Meta-review
 
 We A/B-test the reviews themselves, to measure and improve review quality. `judge.py` (in
-[TauCetiData](https://github.com/TauCetiProject/TauCetiData)) takes two review runs of the
+[EpsilonEridaniData](https://github.com/eic/EpsilonEridaniData)) takes two review runs of the
 same `(pr, head_sha, rubric)` — production vs a `--shadow` arm with a different model or
 rubric version — and has AI judges pick the better one, grounded in the actual checked-out
 code (a fluent hallucinated finding should lose to a terse real one), in both presentation
@@ -56,13 +56,13 @@ win-rates per model and rubric version, and judge–human agreement.
 So far: several thousand archived review runs, a few hundred A/B pairs, and over a thousand AI
 judgments across five judge models and three judge-prompt versions, plus a first round of human
 decisions and preliminary calibration. All of it lives in
-[TauCetiData](https://github.com/TauCetiProject/TauCetiData); see its `docs/` for the design.
+[EpsilonEridaniData](https://github.com/eic/EpsilonEridaniData); see its `docs/` for the design.
 
 ## Costs
 
 `epsiloneridani-review-costs` reports the engine's review spend — tokens and imputed
 dollars, per merged line of code, per day, and split by PR outcome — reading the
-durable [TauCetiData](https://github.com/TauCetiProject/TauCetiData) archive
+durable [EpsilonEridaniData](https://github.com/eic/EpsilonEridaniData) archive
 (reproducible by anyone) or the local store. Costs are recomputed from token
 counts at the rate in effect on each run's date. See [runner/COSTS.md](runner/COSTS.md).
 

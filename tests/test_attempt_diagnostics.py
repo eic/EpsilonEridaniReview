@@ -7,7 +7,7 @@ carried that scoreboard before anyone looked. The fix is a classified `error_kin
 vocabulary, publishable anywhere -- rather than the raw stderr it is derived from.
 
 The raw stderr must not be published, and BOTH persisted sinks are public: the archive record goes
-to TauCetiData, and `--store` is a checkout of this repo's `reviews` branch which the review
+to EpsilonEridaniData, and `--store` is a checkout of this repo's `reviews` branch which the review
 workflow commits and pushes. Until now the per-rubric store record carried `raw_stderr` and
 `session_id` at top level and did leave the machine. These tests pin the stripper that closes that,
 including at depth, since attempts are nested inside the record.

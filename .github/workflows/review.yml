@@ -269,10 +269,10 @@ jobs:
             gh pr edit "$PR" --repo "$R" --remove-label "$LABEL" 2>/dev/null || true
           fi
 
-      # ---- Archive sync: drain store/outbox into TauCetiData. Best-effort (the App may not
-      # ---- cover TauCetiData yet); on failure the outbox rides along in the reviews-branch
+      # ---- Archive sync: drain store/outbox into EpsilonEridaniData. Best-effort (the App may not
+      # ---- cover EpsilonEridaniData yet); on failure the outbox rides along in the reviews-branch
       # ---- store commit below and syncs on a later run.
-      - name: Mint archive token (TauCetiData contents:write)
+      - name: Mint archive token (EpsilonEridaniData contents:write)
         id: archive_token
         if: always()
         continue-on-error: true
@@ -281,17 +281,17 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: TauCetiProject
-          repositories: TauCetiData
+          repositories: EpsilonEridaniData
           permission-contents: write
 
-      - name: Sync archive to TauCetiData
+      - name: Sync archive to EpsilonEridaniData
         if: always()
         continue-on-error: true
         env: { TOKEN: "${{ steps.archive_token.outputs.token }}" }
         run: |
           if [ -d store/outbox ] && [ -n "$TOKEN" ]; then
             python3 runner/archive.py sync --store store --data-dir "$RUNNER_TEMP/epsiloneridani-data" \
-              --remote "https://x-access-token:${TOKEN}@github.com/TauCetiProject/TauCetiData"
+              --remote "https://x-access-token:${TOKEN}@github.com/eic/EpsilonEridaniData"
           else
             echo "no outbox or no token; skipping archive sync"
           fi

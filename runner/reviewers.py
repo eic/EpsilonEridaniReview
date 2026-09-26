@@ -290,7 +290,7 @@ _REVIEW_TOOLS = ("Read", "Grep", "Glob")
 #
 # NOT the model's own words. Grep patterns and Bash commands are chosen by a model reading an
 # untrusted diff, and both persisted sinks are public: `--store` is a checkout of this repo's
-# `reviews` branch that CI pushes, and the archive record goes to TauCetiData. reviewer_env's
+# `reviews` branch that CI pushes, and the archive record goes to EpsilonEridaniData. reviewer_env's
 # docstring already concedes that a prompt-injected reviewer can read its own credential from
 # /proc/self/environ; recording its next Grep pattern verbatim would hand it a way to publish that
 # credential. `--allowedTools` governs permission, not visibility, so a DENIED Bash request still

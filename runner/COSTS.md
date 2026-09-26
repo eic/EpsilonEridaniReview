@@ -16,11 +16,11 @@ It answers:
 
 | source | tokens | $ | when |
 |--------|:------:|:-:|------|
-| **data** a [TauCetiData](https://github.com/TauCetiProject/TauCetiData) checkout | ✅ | ✅ | **canonical** — durable, public, reproducible (`--source data --data-dir …`) |
+| **data** a [EpsilonEridaniData](https://github.com/eic/EpsilonEridaniData) checkout | ✅ | ✅ | **canonical** — durable, public, reproducible (`--source data --data-dir …`) |
 | **store** `~/.cache/epsiloneridani-review/store/<repo>/` | ✅ | ✅ | the live engine cache — fast, local, single-machine |
 | **logs** `task-*.log` | ❌ | ✅ | last-resort fallback, dollars only (`--source logs --logs-dir …`) |
 
-The **data** source is the one to prefer: TauCetiData is the durable, public,
+The **data** source is the one to prefer: EpsilonEridaniData is the durable, public,
 append-only system of record, so anyone can clone it and reproduce the same
 numbers without access to a local cache. Each `records/runs/<pr>/<run_id>.json`
 carries the full `usage` block, `started_at`, `model`, and the engine's
@@ -38,8 +38,8 @@ prefers `data` when `--data-dir` is given, else the store, else logs — never
 mixing, so nothing is double-counted.
 
 ```bash
-git clone --depth 1 https://github.com/TauCetiProject/TauCetiData /tmp/TauCetiData
-epsiloneridani-review-costs --source data --data-dir /tmp/TauCetiData all
+git clone --depth 1 https://github.com/eic/EpsilonEridaniData /tmp/EpsilonEridaniData
+epsiloneridani-review-costs --source data --data-dir /tmp/EpsilonEridaniData all
 ```
 
 ### Pricing — cost is derived from tokens, priced as of each run's date

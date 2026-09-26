@@ -7,7 +7,7 @@ and show the `grep` hit" is the central instruction of `rubrics/_common.md`. `st
 the calls; the whole difficulty is recording them without opening a channel.
 
 Both persisted sinks are PUBLIC: `--store` is a checkout of this repo's `reviews` branch that CI
-pushes, and the archive record goes to TauCetiData. The reviewer reads an untrusted diff, and
+pushes, and the archive record goes to EpsilonEridaniData. The reviewer reads an untrusted diff, and
 `reviewer_env` concedes it can read its own credential from /proc/self/environ. So a model-chosen
 Grep pattern or Bash command recorded verbatim is an exfiltration channel: read the key, put it in
 the next tool argument, and the runner publishes it. `--allowedTools` governs permission, not
