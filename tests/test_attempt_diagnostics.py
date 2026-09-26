@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A failed rubric says why it failed, and says it without publishing provider output.
 
-TauCetiReview#105: a total auth failure rendered as verdict=error, returncode=1, $0.00, on a
+EpsilonEridaniReview#105: a total auth failure rendered as verdict=error, returncode=1, $0.00, on a
 scoreboard headed "changes requested". Nothing in any artifact said "Not logged in", so two PRs
 carried that scoreboard before anyone looked. The fix is a classified `error_kind` -- a closed
 vocabulary, publishable anywhere -- rather than the raw stderr it is derived from.

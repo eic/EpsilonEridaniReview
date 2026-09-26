@@ -153,8 +153,8 @@ def test_gate_is_shared_with_merge_only():
     head = "deadbee"
     required = {"correctness", "reuse"}
     green = {"correctness": "green", "reuse": "green"}
-    diff = {"TauCeti/Foo.lean"}
-    # green + TauCeti-only + build/scope green -> mergeable
+    diff = {"EpsilonEridani/Foo.lean"}
+    # green + EpsilonEridani-only + build/scope green -> mergeable
     assert mfs.decide_from_comments(
         _scoreboard(head, green), head, required, diff, "SUCCESS", "", scope="SUCCESS", merge_base_sha=MB)["merge"]
     # The trusted base-side scope status is a hard gate for every automatic merge. This also
@@ -164,7 +164,7 @@ def test_gate_is_shared_with_merge_only():
     # a stale scoreboard (different head) is refused — the sweep must never enqueue an unreviewed commit
     assert not mfs.decide_from_comments(_scoreboard(head, green), "other99", required, diff,
                                         "SUCCESS", "", scope="SUCCESS", merge_base_sha=MB)["merge"]
-    # a path outside TauCeti/ is refused
+    # a path outside EpsilonEridani/ is refused
     diff2 = {".github/workflows/x.yml"}
     assert not mfs.decide_from_comments(
         _scoreboard(head, green), head, required, diff2, "SUCCESS", "", scope="SUCCESS", merge_base_sha=MB)["merge"]
@@ -180,7 +180,7 @@ def test_newest_completed_current_head_scoreboard_wins():
     required = {"correctness", "reuse"}
     green = {"correctness": "green", "reuse": "green"}
     blocking = {"correctness": "green", "reuse": "blocking_request"}
-    diff = {"TauCeti/Foo.lean"}
+    diff = {"EpsilonEridani/Foo.lean"}
 
     comments = (_scoreboard(head, blocking, "2026-06-26T00:00:00Z")
                 + _scoreboard(head, green, "2026-06-26T01:00:00Z"))
@@ -209,7 +209,7 @@ def test_in_progress_scoreboard_does_not_supersede_a_completed_verdict():
     green = {"correctness": "green", "reuse": "green"}
     pending = {"correctness": "absent", "reuse": "absent"}
     blocking = {"correctness": "green", "reuse": "blocking_request"}
-    diff = {"TauCeti/Foo.lean"}
+    diff = {"EpsilonEridani/Foo.lean"}
     comments = (_scoreboard(head, green, "2026-06-26T00:00:00Z")
                 + _scoreboard(head, pending, "2026-06-26T01:00:00Z", mode="init"))
 
@@ -234,7 +234,7 @@ def test_live_review_marker_holds_enqueue_without_revoking_green_review():
     head = "deadbee"
     required = {"correctness", "reuse"}
     green = {"correctness": "green", "reuse": "green"}
-    diff = {"TauCeti/Foo.lean"}
+    diff = {"EpsilonEridani/Foo.lean"}
     comments = _scoreboard(head, green) + [_marker(head, 2000)]
 
     decision = mfs.decide_from_comments(
@@ -267,7 +267,7 @@ def test_verdict_is_bound_to_the_merge_base_it_reviewed():
     head = "deadbee"
     required = {"correctness", "reuse"}
     green = {"correctness": "green", "reuse": "green"}
-    paths = {"TauCeti/Foo.lean"}
+    paths = {"EpsilonEridani/Foo.lean"}
     ok = mfs.decide_from_comments(_scoreboard(head, green), head, required, paths, "SUCCESS", "",
                                   scope="SUCCESS", merge_base_sha=MB)
     assert ok["review_safe"] and ok["merge"]
@@ -296,10 +296,10 @@ def test_merge_reads_machine_paths_including_names_git_quotes():
     green = {"correctness": "green", "reuse": "green"}
     # A patch header git quotes (non-ASCII or control bytes) is invisible to the diff-text parser,
     # so the merge gate reads the NUL-separated list pr_diff writes instead.
-    odd = [".github/w\u00f6rkflows/x.yml", "scripts/new\nline.py", "TauCeti/Foo.lean"]
+    odd = [".github/w\u00f6rkflows/x.yml", "scripts/new\nline.py", "EpsilonEridani/Foo.lean"]
     quoted = ('diff --git "a/.github/w\\303\\266rkflows/x.yml" "b/.github/w\\303\\266rkflows/x.yml"\n'
-              "diff --git a/TauCeti/Foo.lean b/TauCeti/Foo.lean\n")
-    assert mfs_merge.changed_paths(quoted) == {"TauCeti/Foo.lean"}   # why the parser is not used
+              "diff --git a/EpsilonEridani/Foo.lean b/EpsilonEridani/Foo.lean\n")
+    assert mfs_merge.changed_paths(quoted) == {"EpsilonEridani/Foo.lean"}   # why the parser is not used
     with tempfile.TemporaryDirectory() as d:
         f = pathlib.Path(d) / "paths.z"
         pr_diff.write_paths(f, odd)
@@ -307,7 +307,7 @@ def test_merge_reads_machine_paths_including_names_git_quotes():
     assert paths == set(odd)
     for bad in odd[:2]:
         d = mfs.decide_from_comments(_scoreboard(head, green), head, required,
-                                     {bad, "TauCeti/Foo.lean"}, "SUCCESS", "", scope="SUCCESS",
+                                     {bad, "EpsilonEridani/Foo.lean"}, "SUCCESS", "", scope="SUCCESS",
                                      merge_base_sha=MB)
         assert d["review_safe"] and not d["merge"], (bad, d)
 
@@ -318,27 +318,27 @@ def test_review_merge_decision_reads_machine_paths_and_fails_closed_without():
     states = {"correctness": "green"}
     with tempfile.TemporaryDirectory() as d:
         f = pathlib.Path(d) / "paths.z"
-        args = dict(merge_path_prefix="TauCeti/", merge_allow_file=[], bump_guard="",
+        args = dict(merge_path_prefix="EpsilonEridani/", merge_allow_file=[], bump_guard="",
                     ci_build="SUCCESS", scope="SUCCESS")
         a = types.SimpleNamespace(paths_file="", **args)
         ok, reason = review.merge_decision(a, states, ["correctness"], True, "h" * 40)
         assert not ok and "--paths-file" in reason
         a.paths_file = str(f)
-        pr_diff.write_paths(f, ["TauCeti/Foo.lean"])
+        pr_diff.write_paths(f, ["EpsilonEridani/Foo.lean"])
         assert review.merge_decision(a, states, ["correctness"], True, "h" * 40)[0]
-        pr_diff.write_paths(f, ["TauCeti/Foo.lean", ".github/w\u00f6rkflows/x.yml"])
+        pr_diff.write_paths(f, ["EpsilonEridani/Foo.lean", ".github/w\u00f6rkflows/x.yml"])
         assert not review.merge_decision(a, states, ["correctness"], True, "h" * 40)[0]
         # Thread anchors come from the same list, so a finding on a file whose name git quotes in
         # the patch header still anchors to it.
-        odd = "TauCeti/\u00c9tale.lean"
-        pr_diff.write_paths(f, ["TauCeti/Foo.lean", odd])
-        quoted = ('diff --git "a/TauCeti/\\303\\211tale.lean" "b/TauCeti/\\303\\211tale.lean"\n'
-                  "diff --git a/TauCeti/Foo.lean b/TauCeti/Foo.lean\n")
+        odd = "EpsilonEridani/\u00c9tale.lean"
+        pr_diff.write_paths(f, ["EpsilonEridani/Foo.lean", odd])
+        quoted = ('diff --git "a/EpsilonEridani/\\303\\211tale.lean" "b/EpsilonEridani/\\303\\211tale.lean"\n'
+                  "diff --git a/EpsilonEridani/Foo.lean b/EpsilonEridani/Foo.lean\n")
         paths = review.changed_file_paths(a, quoted)
-        assert paths == {"TauCeti/Foo.lean", odd}
-        assert review.pick_anchor({"findings": [{"file": odd}]}, "TauCeti/Foo.lean", paths) == odd
+        assert paths == {"EpsilonEridani/Foo.lean", odd}
+        assert review.pick_anchor({"findings": [{"file": odd}]}, "EpsilonEridani/Foo.lean", paths) == odd
         a.paths_file = ""
-        assert review.changed_file_paths(a, quoted) == {"TauCeti/Foo.lean"}   # the old parser
+        assert review.changed_file_paths(a, quoted) == {"EpsilonEridani/Foo.lean"}   # the old parser
 
 def test_workflows_pass_status_contexts():
     root = pathlib.Path(__file__).resolve().parent.parent
@@ -463,13 +463,13 @@ def _entry(number, minutes_ago, paths):
 
 def test_is_pin_moving_only_for_lake_pins():
     assert sweep.is_pin_moving(["lake-manifest.json"])
-    assert sweep.is_pin_moving(["TauCeti/Foo.lean", "lean-toolchain"])
-    assert not sweep.is_pin_moving(["TauCeti/Foo.lean"])
+    assert sweep.is_pin_moving(["EpsilonEridani/Foo.lean", "lean-toolchain"])
+    assert not sweep.is_pin_moving(["EpsilonEridani/Foo.lean"])
     assert not sweep.is_pin_moving([])
 
 
 def test_reservation_holder_none_without_a_pin_pr():
-    entries = [_entry(1, 5, ["TauCeti/A.lean"]), _entry(2, 3, ["TauCeti/B.lean"])]
+    entries = [_entry(1, 5, ["EpsilonEridani/A.lean"]), _entry(2, 3, ["EpsilonEridani/B.lean"])]
     assert sweep.reservation_holder(entries, _T0) is None
     assert sweep.reservation_holder([], _T0) is None
 
@@ -477,7 +477,7 @@ def test_reservation_holder_none_without_a_pin_pr():
 def test_reservation_holder_elects_the_earliest_pin_pr():
     # Two bumps open at once must not dequeue each other in a loop: exactly one holds the queue,
     # and it is the one that got there first.
-    entries = [_entry(10, 5, ["TauCeti/A.lean"]),
+    entries = [_entry(10, 5, ["EpsilonEridani/A.lean"]),
                _entry(20, 30, ["lake-manifest.json"]),
                _entry(30, 60, ["lean-toolchain"])]
     assert sweep.reservation_holder(entries, _T0) == 30
@@ -505,7 +505,7 @@ def test_count_evictions_ignores_our_own_reservation_removals():
     events = [{"event": "removed_from_merge_queue", "created_at": at, "actor": "epsiloneridani-review-bot"},
               {"event": "removed_from_merge_queue", "created_at": at, "actor": "github-merge-queue"}]
     assert sweep.count_evictions(events, cutoff, app_login="epsiloneridani-review-bot") == 1
-    assert sweep.is_reservation_removal("Tauceti-Review-Bot", "epsiloneridani-review-bot")
+    assert sweep.is_reservation_removal("Epsiloneridani-Review-Bot", "epsiloneridani-review-bot")
     assert not sweep.is_reservation_removal(None, "epsiloneridani-review-bot")
 
 
@@ -606,7 +606,7 @@ def test_main_hands_off_once_then_waits_until_push():
     with patch.object(sweep, "REPO", "owner/repo"), patch.object(sweep, "DRY_RUN", False), \
             patch.object(sweep, "queue_entries", return_value=[]), \
             patch.object(sweep, "gh_json", gh_json), patch.object(sweep, "gh_jsonl", gh_jsonl), \
-            patch.object(sweep, "gh", gh), patch.object(sweep, "pr_diff", return_value=["TauCeti/X.lean"]), \
+            patch.object(sweep, "gh", gh), patch.object(sweep, "pr_diff", return_value=["EpsilonEridani/X.lean"]), \
             patch.object(sweep, "decide_from_comments", return_value={"merge": True}) as gate:
         assert sweep.main() == 0
         assert mutations == [["pr", "comment"], ["pr", "edit"]]
@@ -651,7 +651,7 @@ def test_merge_base_is_rechecked_right_before_enqueue():
                 patch.object(sweep, "gh_json", gh_json), \
                 patch.object(sweep, "gh_jsonl", return_value=[]), \
                 patch.object(sweep, "current_head", return_value=head), \
-                patch.object(sweep, "pr_diff", return_value=["TauCeti/X.lean"]), \
+                patch.object(sweep, "pr_diff", return_value=["EpsilonEridani/X.lean"]), \
                 patch.object(sweep, "decide_from_comments", return_value={"merge": True}), \
                 patch.object(sweep, "enqueue", return_value=True) as enq, \
                 patch.object(sweep, "dequeue", return_value=True) as deq, \

@@ -14,7 +14,7 @@ identity, and defaults to a dry run that prints the verdicts without touching th
 It assembles the same reviewer workspace CI does — the PR source at its head, the roadmap, and
 (unless --no-mathlib) the pinned Mathlib source for grep — then invokes the engine in
 `--auth subscription` mode. The rubrics and engine come from a checkout of THIS repo
-(TauCetiReview): the one you ran from if it is a checkout, else a cached shallow clone, so the
+(EpsilonEridaniReview): the one you ran from if it is a checkout, else a cached shallow clone, so the
 rubrics always match the engine.
 
 Prerequisites on PATH and logged in: `git`, `gh` (`gh auth login`), `claude` (Claude
@@ -41,9 +41,9 @@ import uuid
 # reason to arrange). tests/test_provider_down.py pins the two definitions together.
 PROVIDER_DOWN_EXIT = 3
 
-REVIEW_REPO = "eic/TauCetiReview"
-DEFAULT_CODE_REPO = "eic/TauCeti"
-DEFAULT_ROADMAP_REPO = "eic/TauCetiRoadmap"
+REVIEW_REPO = "eic/EpsilonEridaniReview"
+DEFAULT_CODE_REPO = "eic/EpsilonEridani"
+DEFAULT_ROADMAP_REPO = "eic/EpsilonEridaniRoadmap"
 CACHE_DIR = pathlib.Path(
     os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))) / "epsiloneridani-review"
 
@@ -104,7 +104,7 @@ def stage_tree(src, dst, *, ignore_extra=()):
 
 
 def resolve_repo_dir(explicit):
-    """Locate a TauCetiReview checkout providing rubrics/ and runner/ — engine and rubrics
+    """Locate a EpsilonEridaniReview checkout providing rubrics/ and runner/ — engine and rubrics
     together, so they never drift. Order: --repo-dir, $TAUCETI_REVIEW_DIR, this source tree if it
     is a checkout, else a cached shallow clone refreshed each run."""
     def ok(p):
@@ -116,7 +116,7 @@ def resolve_repo_dir(explicit):
         if cand and ok(cand):
             return pathlib.Path(cand).resolve()
 
-    clone = CACHE_DIR / "TauCetiReview"
+    clone = CACHE_DIR / "EpsilonEridaniReview"
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     if (clone / ".git").is_dir():
         run(["git", "-C", str(clone), "fetch", "-q", "--depth", "1", "origin", "main"], quiet=True)
@@ -130,7 +130,7 @@ def resolve_repo_dir(explicit):
 
 
 def engine_at(sha):
-    """A cached checkout of TauCetiReview pinned at `sha` — rubrics AND engine together, so a
+    """A cached checkout of EpsilonEridaniReview pinned at `sha` — rubrics AND engine together, so a
     shadow arm reruns exactly the code+rubrics of that commit, not main's engine on old rubrics."""
     dst = CACHE_DIR / "engines" / sha[:12]
     if not (dst / "rubrics").is_dir():
@@ -154,7 +154,7 @@ def gh_json(repo, pr, fields):
 def ci_build_status(meta, head):
     """Assert a green build only for the reviewed head, across both GitHub status formats.
 
-    TauCeti's workflow-pinned audit posts a StatusContext, whereas older builds used a
+    EpsilonEridani's workflow-pinned audit posts a StatusContext, whereas older builds used a
     CheckRun. A pending or conflicting build entry must not become a trusted success.
     """
     if meta.get("headRefOid") != head:
@@ -467,7 +467,7 @@ def main():
                     help="use a pre-staged Mathlib source tree (copied into the workspace) instead of "
                          "fetching it. Same motivation as --roadmap-dir; ignored with --no-mathlib.")
     ap.add_argument("--repo-dir", default="",
-                    help="path to a TauCetiReview checkout (default: auto-detect / cached clone)")
+                    help="path to a EpsilonEridaniReview checkout (default: auto-detect / cached clone)")
     ap.add_argument("--workdir", default="", help="workspace dir (default: a fresh temp dir)")
     ap.add_argument("--keep", action="store_true", help="keep the workspace dir after finishing")
     ap.add_argument("--store", default="",
@@ -506,7 +506,7 @@ def main():
     ap.add_argument("--label", default="",
                     help="shadow arm label, recorded as arm=shadow:<label> on every record")
     ap.add_argument("--rubrics-sha", default="",
-                    help="run the rubrics AND engine pinned at this TauCetiReview commit "
+                    help="run the rubrics AND engine pinned at this EpsilonEridaniReview commit "
                          "(a cached per-SHA checkout), instead of the floating main")
     ap.add_argument("--no-coordinate", action="store_true",
                     help="skip the review-in-progress marker. By default a contributing run (one that "

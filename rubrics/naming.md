@@ -11,10 +11,10 @@ is nonstandard.
   source term.
 - Compare name strength to statement strength: a name must not advertise a missing converse,
   uniqueness, or equality (named `…_iff` with one direction, or `…_eq` proving only `≤`).
-- Material goes in the `TauCeti` namespace, except when it is dot notation on something already
+- Material goes in the `EpsilonEridani` namespace, except when it is dot notation on something already
   defined in Lean or Mathlib: a declaration whose first explicit argument has an existing Lean or
   Mathlib type belongs in that type's namespace, so `x.foo` elaborates for consumers and the
-  declaration can be upstreamed without renaming. Flag a file that opens `namespace TauCeti` and
+  declaration can be upstreamed without renaming. Flag a file that opens `namespace EpsilonEridani` and
   then `namespace Foo` for a upstream type `Foo` whose declarations take a `Foo`. Do not
   flag EpsilonEridani's own notions that share a name with a upstream namespace, nor material merely filed
   under an organisational namespace such as `AlgebraicGeometry` or `MeasureTheory`.

@@ -1,9 +1,9 @@
 # EpsilonEridani Review
 
 The review rubrics and the machinery that runs review for
-[EpsilonEridani](https://github.com/eic/TauCeti), an AIs-welcome Lean 4 library
+[EpsilonEridani](https://github.com/eic/EpsilonEridani), an AIs-welcome Lean 4 library
 downstream of Mathlib. Humans own these rubrics; AIs author the code; the human roadmaps
-live in [TauCetiRoadmap](https://github.com/eic/TauCetiRoadmap).
+live in [EpsilonEridaniRoadmap](https://github.com/eic/EpsilonEridaniRoadmap).
 
 EpsilonEridani is being incubated by the [Lean FRO](https://lean-lang.org/fro/) in partnership with academic and
 industry groups.
@@ -32,8 +32,8 @@ Claude / Codex / Kiro subscription** with the `epsiloneridani-review` CLI — no
 [REVIEWING.md](REVIEWING.md):
 
 ```bash
-uvx --from git+https://github.com/eic/TauCetiReview epsiloneridani-review 42
-uvx --from git+https://github.com/eic/TauCetiReview epsiloneridani-review 42 \
+uvx --from git+https://github.com/eic/EpsilonEridaniReview epsiloneridani-review 42
+uvx --from git+https://github.com/eic/EpsilonEridaniReview epsiloneridani-review 42 \
   --reviewer kiro --kiro-model gpt-5.6-sol
 ```
 

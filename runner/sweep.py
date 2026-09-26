@@ -9,7 +9,7 @@ evicted-once, and stranded — green on every rubric yet never merged. housekeep
 (and only blocking ones), so a wedged-but-green PR is closed by nothing; without this sweep it would
 strand forever. This runs on a schedule and re-drives them:
 
-  enqueue        The default. For a green-at-head, TauCeti/-only, mergeable PR that targets main and is
+  enqueue        The default. For a green-at-head, EpsilonEridani/-only, mergeable PR that targets main and is
                  not already in the queue, re-enqueue it. Cheap: it reuses the EXISTING head-pinned green
                  review (no re-review, no API spend), and the queue's own rebuild-against-main is the
                  real test. This rescues the common case — a transient eviction (a merge group that could
@@ -55,7 +55,7 @@ DRY_RUN = os.environ.get("DRY_RUN") == "1"
 # update-branch. 0 prior evictions => first re-enqueue; the queue rebuild is the real test. The default
 # (2) gives a transient eviction one more cheap retry before paying for an update-branch + re-review.
 EVICT_ESCALATE = int(os.environ.get("EVICT_ESCALATE", "2"))
-MERGE_PREFIX = os.environ.get("MERGE_PREFIX", "TauCeti/")
+MERGE_PREFIX = os.environ.get("MERGE_PREFIX", "EpsilonEridani/")
 # A PR touching these gets the merge queue to itself while it is enqueued (see reservation_holder).
 PIN_PATHS = {"lake-manifest.json", "lean-toolchain"}
 # How long a holder may hold the queue. Its build takes 83-95 minutes, so an entry much older than
@@ -246,7 +246,7 @@ def decide_action(*, merge_ok, in_queue, evictions_at_head, behind, escalate=EVI
     """Pure policy: given the merge gate's verdict and the PR's queue history, what should the sweep do?
     Returns (action, reason) with action in {skip, enqueue, update_branch, flag}.
 
-      not green / not TauCeti-only ....... skip (decide_from_comments already refused it)
+      not green / not EpsilonEridani-only ....... skip (decide_from_comments already refused it)
       already in the merge queue ......... skip (it is progressing)
       evicted < escalate times ........... enqueue (re-enqueue; the queue rebuild is the real test)
       evicted >= escalate, behind main ... update_branch (queue proved this head cannot merge; re-test
@@ -640,7 +640,7 @@ def main():
             decision = decide_from_comments(comments, head, required, paths, ci_build, bump_guard,
                                             MERGE_PREFIX, scope=scope, merge_base_sha=merge_base)
             if not decision["merge"]:
-                continue   # not green at head / not TauCeti-only — the normal gate would not merge it
+                continue   # not green at head / not EpsilonEridani-only — the normal gate would not merge it
             behind = int((cmp or {}).get("behind_by") or 0)
             head_dt = parse_ts((gh_json(["api", f"/repos/{REPO}/commits/{head}"]) or {})
                                .get("commit", {}).get("committer", {}).get("date"))

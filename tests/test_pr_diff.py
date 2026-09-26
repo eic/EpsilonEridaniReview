@@ -24,7 +24,7 @@ import merge  # noqa: E402
 import pr_diff  # noqa: E402
 
 N_FILES = 320
-ODD_NAMES = ["TauCeti/\u00c9tale.lean", "outside\nnewline.txt"]
+ODD_NAMES = ["EpsilonEridani/\u00c9tale.lean", "outside\nnewline.txt"]
 
 
 def _git(repo, *args):
@@ -50,7 +50,7 @@ def _fixture(root):
     _git(src, "init", "-q", "-b", "main")
     _git(src, "config", "uploadpack.allowFilter", "true")
     _git(src, "config", "uploadpack.allowAnySHA1InWant", "true")
-    lib = src / "TauCeti"
+    lib = src / "EpsilonEridani"
     lib.mkdir()
     for i in range(N_FILES):
         (lib / f"F{i:03}.lean").write_text(f"theorem t{i} : True := trivial\n")
@@ -111,15 +111,15 @@ def test_large_pr_diff_is_three_dot_and_complete():
         text = diff.decode()
         assert text.count("\ndiff --git ") + text.startswith("diff --git ") == N_FILES + 8, text[:400]
         assert len(paths) == len(set(paths)) == N_FILES + 9          # a rename lists both sides
-        assert {"TauCeti/F000.lean", f"TauCeti/F{N_FILES - 1:03}.lean", "TauCeti/Moved.lean",
-                "TauCeti/Renamed.lean", "TauCeti/Gone.lean", "script.sh", "logo.png",
+        assert {"EpsilonEridani/F000.lean", f"EpsilonEridani/F{N_FILES - 1:03}.lean", "EpsilonEridani/Moved.lean",
+                "EpsilonEridani/Renamed.lean", "EpsilonEridani/Gone.lean", "script.sh", "logo.png",
                 "NoEol.lean", ".gitattributes", *ODD_NAMES} == set(paths) - {
-                    f"TauCeti/F{i:03}.lean" for i in range(1, N_FILES - 1)}
+                    f"EpsilonEridani/F{i:03}.lean" for i in range(1, N_FILES - 1)}
         # The machine-read list agrees with the patch headers wherever git does not quote a name,
         # and has the quoted ones the header parser cannot see.
         assert set(paths) - set(ODD_NAMES) == merge.changed_paths(text)
         assert "MainOnly.lean" not in paths          # merge-base semantics, not base tip vs head
-        assert "rename from TauCeti/Moved.lean\nrename to TauCeti/Renamed.lean\n" in text
+        assert "rename from EpsilonEridani/Moved.lean\nrename to EpsilonEridani/Renamed.lean\n" in text
         assert "deleted file mode 100644" in text
         assert "old mode 100644\nnew mode 100755\n" in text
         assert "Binary files a/logo.png and b/logo.png differ\n" in text

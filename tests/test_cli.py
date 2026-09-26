@@ -153,7 +153,7 @@ def test_fable_review_preserves_exact_model_and_reported_cost():
 
 
 def test_build_status_context_reaches_the_trusted_prompt():
-    # The actual shape returned for TauCeti PR #8073, whose sandboxed build and
+    # The actual shape returned for EpsilonEridani PR #8073, whose sandboxed build and
     # workflow-pinned audits passed. There is no CheckRun.name/conclusion here.
     meta = {
         "headRefOid": "reviewed-head",

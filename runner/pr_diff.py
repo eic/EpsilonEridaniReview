@@ -10,7 +10,7 @@ run `git diff <merge-base> <head>`.
 
 The bytes matter beyond the prompt: `casefile.patch_digest` hashes them to decide whether an
 approval carries to a new head, so the workflows and the local CLI must produce them the same way.
-They all call this. The output also matches `gh pr diff` byte for byte on TauCeti's Lean sources
+They all call this. The output also matches `gh pr diff` byte for byte on EpsilonEridani's Lean sources
 (new, deleted and renamed files, binary files, mode changes, missing trailing newlines); it can
 differ in the section label after a hunk's `@@ ... @@` (GitHub applies language-specific function
 patterns to e.g. Python and BibTeX files, git's default here) and in the length of the abbreviated
@@ -34,7 +34,7 @@ rewrite, external diff driver or textconv applies. The PR's own `.gitattributes`
 (no work tree and an unborn HEAD leave no tree to read it from), so a PR cannot hide a change from
 the reviewer by marking it `-diff`.
 
-    pr_diff.py --repo eic/TauCeti --pr 123 --head-sha <sha> --merge-base-sha <sha> \
+    pr_diff.py --repo eic/EpsilonEridani --pr 123 --head-sha <sha> --merge-base-sha <sha> \
         --out diff.txt --paths-out paths.z
 
 Flat imports only (run as a script with runner/ on sys.path, or imported by sweep.py).
@@ -47,16 +47,16 @@ import sys
 import tempfile
 import threading
 
-# Blob-id abbreviation on `index` lines, as GitHub renders them for TauCeti today. Cosmetic: the
+# Blob-id abbreviation on `index` lines, as GitHub renders them for EpsilonEridani today. Cosmetic: the
 # patch digest normalises these ids away.
 INDEX_ABBREV = 11
 # Hard cap on the diff (and on the NUL-separated path list). Real large PRs are far below it: the
-# 909-file mathlib4 bump #3780 is about 6 MB, the 338-file mathlib4 #26077 0.36 MB, TauCeti's
+# 909-file mathlib4 bump #3780 is about 6 MB, the 338-file mathlib4 #26077 0.36 MB, EpsilonEridani's
 # biggest diffs well under 1 MB.
 MAX_BYTES = 64 << 20
 # Hard cap on everything downloaded into the throwaway repository (trees plus the changed files'
 # contents), enforced while git runs and checked again after. mathlib4 #3780 (909 files) needs
-# about 6 MB; TauCeti's trees are about 0.4 MB and its largest tracked file under 0.3 MB.
+# about 6 MB; EpsilonEridani's trees are about 0.4 MB and its largest tracked file under 0.3 MB.
 MAX_FETCH_BYTES = 256 << 20
 FETCH_TIMEOUT = 300   # seconds, per git call
 DIFF_TIMEOUT = 300

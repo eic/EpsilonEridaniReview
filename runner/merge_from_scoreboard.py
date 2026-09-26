@@ -8,7 +8,7 @@ an earlier one instead of making every disagreement a permanent veto. An unexpir
 review-in-progress marker delays initial enqueue, but does not revoke an already-completed green
 verdict; if that review later posts a blocking scoreboard, the completed verdict makes the review
 state unsafe and the reconciler dequeues the PR. It is mergeable when that review state is safe, no
-review is live, and the shared `decide_merge` rule also holds (build green, TauCeti/-only + allowed
+review is live, and the shared `decide_merge` rule also holds (build green, EpsilonEridani/-only + allowed
 root/pins, bump-guard for a pin). This is the "no bar" model: trust is the posted comment itself, so a
 contributor with no repo write can still have their review count. The HARD boundary that a forged
 scoreboard cannot bypass remains the CI build + scope + axiom audit + bump-guard checks.
@@ -127,9 +127,9 @@ def has_live_review(comments, head_sha, now=None):
 # docbuild/docs/references.bib is the bibliography doc-gen4 resolves docstring citations
 # against, so a docstring citing a work no one has entered renders as a bare bracketed key.
 # Filling it in is the same work as writing the docstring. It is BibTeX read only by the pages
-# build — never by Lake or the review harness — so nothing here executes it. TauCeti's own scope
+# build — never by Lake or the review harness — so nothing here executes it. EpsilonEridani's own scope
 # guard allows the same single path; both gates must agree for such a PR to merge.
-DEFAULT_ALLOW = ["TauCeti.lean", "lake-manifest.json", "lean-toolchain",
+DEFAULT_ALLOW = ["EpsilonEridani.lean", "lake-manifest.json", "lean-toolchain",
                  "docbuild/docs/references.bib"]
 
 
@@ -156,7 +156,7 @@ def load_comments(text):
 
 
 def decide_from_comments(comments, head_sha, required, paths, ci_build, bump_guard,
-                         merge_path_prefix="TauCeti/", merge_allow_file=None, scope="", now=None,
+                         merge_path_prefix="EpsilonEridani/", merge_allow_file=None, scope="", now=None,
                          merge_base_sha=""):
     """The gate shared by merge-only and the sweep.
 
@@ -233,7 +233,7 @@ def resolve_commit_status(repo, head_sha, context):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--repo", default="eic/TauCeti")
+    ap.add_argument("--repo", default="eic/EpsilonEridani")
     ap.add_argument("--pr", required=True)
     ap.add_argument("--head-sha", required=True)
     ap.add_argument("--comments-file", required=True, help="JSON array of the PR's issue comments")
@@ -247,7 +247,7 @@ def main():
     ap.add_argument("--bump-guard", default="")
     ap.add_argument("--scope", default="",
                     help="trusted scope status; resolved from HEAD when omitted")
-    ap.add_argument("--merge-path-prefix", default="TauCeti/")
+    ap.add_argument("--merge-path-prefix", default="EpsilonEridani/")
     ap.add_argument("--merge-allow-file", action="append", default=list(DEFAULT_ALLOW))
     ap.add_argument("--merge-decision-file", default="")
     a = ap.parse_args()

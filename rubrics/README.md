@@ -15,7 +15,7 @@ block-capable integrity angles run first (cheapest, most-likely-to-block earlies
 | Rubric | Question | Can block? |
 | --- | --- | --- |
 | [`correctness`](correctness.md) | Do the statements and definitions say what they should? | yes |
-| [`reuse`](reuse.md) | Does it reuse Mathlib / TauCeti instead of reinventing? | yes (outright duplication) |
+| [`reuse`](reuse.md) | Does it reuse Mathlib / EpsilonEridani instead of reinventing? | yes (outright duplication) |
 | [`scope`](scope.md) | Is this on the roadmap, and a single topic? | yes |
 | [`attribution`](attribution.md) | Does it credit its formal and informal sources? | yes (clear missing credit) |
 | [`api-design`](api-design.md) | Minimal public surface, complete characteristic API? | no |

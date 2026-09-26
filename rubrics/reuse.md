@@ -1,6 +1,6 @@
 # Reuse and duplication
 
-Pull requests must not duplicate existing material from Mathlib or TauCeti, whether directly or via unnecessary thin wrappers. Whenever it is possible to reuse existing developments from Mathlib, Physlib, PhyslibAlpha, or TauCeti, it is essential to do so, and to ensure that new contributions make effective use of the upstream theories (Mathlib, Physlib, PhyslibAlpha, TauCeti).
+Pull requests must not duplicate existing material from Mathlib or EpsilonEridani, whether directly or via unnecessary thin wrappers. Whenever it is possible to reuse existing developments from Mathlib, Physlib, PhyslibAlpha, or EpsilonEridani, it is essential to do so, and to ensure that new contributions make effective use of the upstream theories (Mathlib, Physlib, PhyslibAlpha, EpsilonEridani).
 
 A new declaration that a located existing declaration directly replaces should result in a
 `block` review; every other form of duplication below is `request_changes`.
@@ -8,7 +8,7 @@ A new declaration that a located existing declaration directly replaces should r
 ## Detecting potential duplication
 
 Run each of these searches. Choose relevant search terms and grep (under
-`.lake/packages/{mathlib,physlib,physlib_alpha,epsiloneridani}` and `TauCeti/`) to verify.
+`.lake/packages/{mathlib,physlib,physlib_alpha,epsiloneridani}` and `EpsilonEridani/`) to verify.
 
 - For each new declaration, search for an existing one with the same content.
   (Sometimes you'll find something with a different name than expected, or a variant that
@@ -21,7 +21,7 @@ Run each of these searches. Choose relevant search terms and grep (under
 - For each definition assembled from raw pieces, search for a library combinator that does
   the assembly (for example `Finsupp.ofSupportFinite` rather than `Finsupp.onFinset`
   plumbing).
-- For each new block of code, grep TauCeti for its distinctive identifiers or proof shape,
+- For each new block of code, grep EpsilonEridani for its distinctive identifiers or proof shape,
   to find near-clones that should be factored into a shared construction.
 - Within the diff itself, look for private lemmas restating public ones up to defeq,
   composite lemmas that their component `@[simp]` lemmas already prove, and `∧`-bundles of

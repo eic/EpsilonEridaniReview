@@ -424,7 +424,7 @@ def run_claude(prompt, cwd, model, env):
         trace, meta, d = _tool_trace(r.stdout.splitlines(), cwd or ".")
         # A stream that ends without its terminal event is as unusable as a malformed json document
         # was, and takes the same path — but say so, because an empty diagnosis is what made
-        # TauCetiReview#105 unreadable.
+        # EpsilonEridaniReview#105 unreadable.
         if d is None:
             raise ValueError(f"no result event in a {len(r.stdout)}-byte stream-json stream")
         out.update(tool_trace=trace, tool_trace_meta=meta)

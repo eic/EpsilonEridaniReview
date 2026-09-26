@@ -61,7 +61,7 @@ from runner.pricing import load_price_windows as load_history
 CACHE = Path.home() / ".cache" / "epsiloneridani-review"
 DEFAULT_DB = CACHE / "review-costs.db"
 DEFAULT_OUT = CACHE / "review-costs.svg"
-DEFAULT_REPO = "eic/TauCeti"
+DEFAULT_REPO = "eic/EpsilonEridani"
 SCHEMA_VERSION = 5
 
 # Cost is DERIVED, not a stored fact. We recompute every *estimated* (codex/pi) review from the

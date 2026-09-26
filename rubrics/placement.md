@@ -8,7 +8,7 @@ imports whose wrongness is evident from the diff or the dependency topic.
 
 - Each declaration belongs in its canonical home: the file whose topic, level, and
   dependencies fit it, near the definition or result it elaborates. If it belongs in an
-  earlier `TauCeti/` file, or depends on no later theory and is broadly useful, ask to move it
+  earlier `EpsilonEridani/` file, or depends on no later theory and is broadly useful, ask to move it
   there.
 - Reject generic placement for declarations whose hypotheses or names are roadmap-specific:
   do not let roadmap-specific lemmas masquerade as reusable by living in a generic file.

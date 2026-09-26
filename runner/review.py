@@ -3,7 +3,7 @@
 
 Reviews a PR with agentic CLIs (claude / codex, random per rubric, read-only), posts an
 aggregated verdict, and records spend. State lives in a `--store` directory (a checkout of
-the `reviews` branch of TauCetiReview): `ledger.json` plus `reviews/<pr>/<round>/`. A daily
+the `reviews` branch of EpsilonEridaniReview): `ledger.json` plus `reviews/<pr>/<round>/`. A daily
 USD budget halts spending, and a `block` verdict halts the round early — the rubrics not yet
 run stay deferred until the block clears. With `--auto-subset`, a re-review runs only the
 rubrics whose last round was not `approve`. The workflow commits the store after the run.
@@ -55,7 +55,7 @@ def public_record(value):
 
 
 # What went wrong, as a closed vocabulary safe to publish and to key metrics off. This exists because
-# the untyped alternative is not publishable: TauCetiReview#105 was a total auth failure that rendered
+# the untyped alternative is not publishable: EpsilonEridaniReview#105 was a total auth failure that rendered
 # as a bare "error" at $0.00 on a scoreboard headed "changes requested", and the only thing that said
 # otherwise was raw provider text nobody may print. A named kind carries the diagnosis without the
 # payload. Ordered: the first pattern to match wins, so the specific precede `unknown`.
@@ -140,7 +140,7 @@ def abort_provider_down(ctx):
 
     The error case files are left as written: they are the provenance of what happened, they are what
     makes the next round re-run those rubrics (an `error` state is blocking, so needs_fresh_run picks
-    it up), and TauCetiReview#105 is the standing argument that a total auth failure must stay
+    it up), and EpsilonEridaniReview#105 is the standing argument that a total auth failure must stay
     recorded and stay loud. What changes is that nothing reaches the PR. The publication write-ahead
     marker is cleared for the same reason: there is no publication to repair.
 
@@ -168,7 +168,7 @@ def abort_provider_down(ctx):
 
 def stderr_summary(res, limit=200):
     """The last non-empty line of stderr: where the agent CLIs put the operative diagnosis (`Not
-    logged in · Please run /login` for TauCetiReview#105, provider API errors generally) with the
+    logged in · Please run /login` for EpsilonEridaniReview#105, provider API errors generally) with the
     progress chatter above it. UNSANITISED provider output — for a local operator's terminal only,
     never for a persisted record and never under CI, whose logs are as public as the repo."""
     for line in reversed((res.get("raw_stderr") or "").splitlines()):
@@ -395,7 +395,7 @@ def run_rubric(ctx, rubric):
         # first attempt's spend/usage/failure is provenance too. error_kind rides along because it is
         # the only field that says *why* an attempt failed: a total auth failure otherwise reads as
         # returncode=1 at $0.00, indistinguishable from a model that simply produced nothing
-        # (TauCetiReview#105). It is a closed vocabulary, so unlike the stderr it derives from, it is
+        # (EpsilonEridaniReview#105). It is a closed vocabulary, so unlike the stderr it derives from, it is
         # safe in a record that gets committed and pushed.
         attempts.append({k: r[k] for k in ("returncode", "cost_usd", "cost_estimated",
                                            "usage", "session_id", "parse_error")
@@ -539,7 +539,7 @@ def run_rubric(ctx, rubric):
           f"today=${spent_today:.2f}")
     # A rubric that produced no verdict is the case a human has to diagnose, and the line above says
     # only that it happened: `Not logged in` at $0.00 read as an ordinary "error" for two whole PRs
-    # before anyone looked (TauCetiReview#105). The classified kind is safe anywhere. The raw stderr
+    # before anyone looked (EpsilonEridaniReview#105). The classified kind is safe anywhere. The raw stderr
     # line is not — under GITHUB_ACTIONS the workflow log is as public as the repo — so it prints only
     # for a local operator, which is precisely the case that had nothing to go on.
     if not v:
@@ -574,7 +574,7 @@ def merge_decision(a, states, candidates, all_green, head):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--repo", default="eic/TauCeti")
+    ap.add_argument("--repo", default="eic/EpsilonEridani")
     ap.add_argument("--pr", required=True)
     ap.add_argument("--rubrics", default=",".join(DEFAULT_RUBRICS))
     ap.add_argument("--rubrics-dir", required=True)
@@ -607,7 +607,7 @@ def main():
     ap.add_argument("--merge-base-sha", default="",
                     help="merge base of base and head — the actual left side of the reviewed "
                          "three-dot diff (runner/pr_diff.py). Recorded as provenance")
-    ap.add_argument("--rubrics-repo", default="eic/TauCetiReview",
+    ap.add_argument("--rubrics-repo", default="eic/EpsilonEridaniReview",
                     help="owner/name the pinned rubric links point into")
     ap.add_argument("--rubrics-sha", default="",
                     help="git commit SHA of the rubrics+engine checkout, for pinned rubric links "
@@ -639,13 +639,13 @@ def main():
     ap.add_argument("--auto-merge", action="store_true",
                     help="compute a merge decision: mergeable iff every rubric approves on the "
                          "current commit and the PR touches only --merge-path-prefix")
-    ap.add_argument("--merge-path-prefix", default="TauCeti/",
+    ap.add_argument("--merge-path-prefix", default="EpsilonEridani/",
                     help="auto-merge only PRs whose every changed path is under this prefix; "
                          "anything else (infra) is left for human merge")
     ap.add_argument("--merge-allow-file", action="append",
-                    default=["TauCeti.lean", "lake-manifest.json", "lean-toolchain"],
+                    default=["EpsilonEridani.lean", "lake-manifest.json", "lean-toolchain"],
                     help="extra exact paths (besides --merge-path-prefix) an auto-mergeable PR "
-                         "may touch; defaults to the root aggregator TauCeti.lean (so a PR can make "
+                         "may touch; defaults to the root aggregator EpsilonEridani.lean (so a PR can make "
                          "a new module reachable from the root) and the two machine-validated Lake "
                          "pins lake-manifest.json / lean-toolchain (a forward bump — see --bump-guard). "
                          "Repeatable.")
@@ -1119,7 +1119,7 @@ def main():
 
     # Merge gate: every rubric green on HEAD (fresh, not stale), and every changed
     # path under --merge-path-prefix or an allowed root file (--merge-allow-file,
-    # default TauCeti.lean — so a PR may make a new module reachable from the root).
+    # default EpsilonEridani.lean — so a PR may make a new module reachable from the root).
     if a.merge_decision_file:
         merge_ok, reason = False, "auto-merge not enabled"
         if a.auto_merge:

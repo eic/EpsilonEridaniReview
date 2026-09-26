@@ -12,7 +12,7 @@ credit is clearly absent.
   with no text copied.
 - Do not invent attribution requirements for routine work that draws on nothing in
   particular.
-- Do not credit the project's own roadmap (`TauCetiRoadmap`) in the file. Only credit it in
+- Do not credit the project's own roadmap (`EpsilonEridaniRoadmap`) in the file. Only credit it in
   the PR description, in the mandatory `Roadmap: <name>` line.
 
 ## Verdict

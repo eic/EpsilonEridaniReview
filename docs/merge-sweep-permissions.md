@@ -7,7 +7,7 @@ pinned create-github-app-token v2.2.1: v1 silently ignores permission inputs and
 inherits every App permission.
 
 Both reusable-workflow references and `review_ref` in callers must pin the same
-reviewed TauCetiReview commit. The sweep runs trusted pinned code and never
+reviewed EpsilonEridaniReview commit. The sweep runs trusted pinned code and never
 executes a PR. Permission changes do not bypass build or review gates.
 
 ## Fork branches
@@ -21,7 +21,7 @@ worker, or a maintainer with existing authorized access. Do not add a personal
 access token to CI as an automatic fallback.
 
 A live sweep on 2026-09-17 failed to update #7077 and #6778 in
-`sqrt-of-2/TauCeti` despite the upstream Workflows grant. A maintainer's normal
+`sqrt-of-2/EpsilonEridani` despite the upstream Workflows grant. A maintainer's normal
 GitHub login successfully requested the #7077 update. These are separate from
 #7077's duplicate Lean declarations, which still require a code fix.
 

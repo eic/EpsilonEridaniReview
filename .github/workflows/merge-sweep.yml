@@ -18,7 +18,7 @@ on:
         type: boolean
         default: false
       review_ref:
-        description: "Exact TauCetiReview engine commit to run (defaults to main)"
+        description: "Exact EpsilonEridaniReview engine commit to run (defaults to main)"
         type: string
         default: main
     secrets:
@@ -39,7 +39,7 @@ jobs:
       - name: Checkout review repo (runner)
         uses: actions/checkout@v4
         with:
-          repository: eic/TauCetiReview
+          repository: eic/EpsilonEridaniReview
           ref: ${{ inputs.review_ref }}
           persist-credentials: false
 
@@ -47,17 +47,17 @@ jobs:
       # label / comment when flagging. workflows:write is needed when updating a stale
       # PR branch brings in workflow changes already on main (GitHub rejects update-branch
       # without it even for a Lean-only PR). This job runs only the trusted, pinned runner,
-      # never checks out or executes PR code, and scopes the token to TauCeti only.
+      # never checks out or executes PR code, and scopes the token to EpsilonEridani only.
       # The App registration AND its installation must approve this permission first;
       # see docs/merge-sweep-permissions.md. Other merge/review tokens remain narrower.
-      - name: Mint merge-sweep token (TauCeti branch-update permissions)
+      - name: Mint merge-sweep token (EpsilonEridani branch-update permissions)
         id: merge_token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1; v1 ignores permission-* inputs
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: eic
-          repositories: TauCeti
+          repositories: EpsilonEridani
           permission-contents: write
           permission-pull-requests: write
           permission-issues: write  # create recovery/reservation labels when absent
@@ -66,6 +66,6 @@ jobs:
       - name: Re-drive evicted green PRs
         env:
           GH_TOKEN: ${{ steps.merge_token.outputs.token }}
-          REPO: eic/TauCeti
+          REPO: eic/EpsilonEridani
           DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
         run: python3 runner/sweep.py

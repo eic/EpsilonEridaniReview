@@ -31,7 +31,7 @@ def test_listed_references_exist():
 def test_naming_prompt_carries_the_conventions():
     p = reviewers.build_prompt(RUBRICS, "naming", "CTX", "MARKER")
     assert "# Mathlib naming conventions" in p
-    assert "TauCeti addendum" in p
+    assert "EpsilonEridani addendum" in p
     # Assembly order: shared protocol, angle, reference document, then the PR context.
     assert (p.index("# Review agents: shared protocol")
             < p.index("# Naming and notation")

@@ -29,7 +29,7 @@ object. One per (PR, rubric), stored on the `reviews` branch in `ledger.json`:
   "approved_sha": "<sha of the last approve, or null>", // staleness compares this to HEAD
   "summary": "<neutral one-liner of what was checked>",
   "findings": [
-    { "id": "placement-001", "file": "TauCeti/.../Deck.lean", "line": 39,
+    { "id": "placement-001", "file": "EpsilonEridani/.../Deck.lean", "line": 39,
       "issue": "...", "fix": "...", "evidence": "<grep hit / reasoning>" }
   ],
   "thread": { "comment_id": 123, "node_id": "PRRT_...", "path": "...", "line": 39 } | null,
@@ -126,7 +126,7 @@ become a comment the trusted phase chooses to post.
 ## Merge gate
 
 Mergeable iff **every** rubric is **green on HEAD** (fresh, not stale) and every changed path is
-under `TauCeti/`. (Replaces "all approve across this sha's rounds".)
+under `EpsilonEridani/`. (Replaces "all approve across this sha's rounds".)
 
 ## Staging
 
@@ -134,7 +134,7 @@ under `TauCeti/`. (Replaces "all approve across this sha's rounds".)
   silent approvals, staleness + freshness sweep, compact reactivation, new merge gate, the
   untrusted/trusted post-plan split. Triggers limited to commit + manual. Tested on a throwaway
   PR before touching #26.
-- **Stage 2** (follow-up PR, also touches TauCeti `review.yml`): the
+- **Stage 2** (follow-up PR, also touches EpsilonEridani `review.yml`): the
   `pull_request_review_comment` trigger, reply→rubric mapping, single-rubric reply mode, and
   resolve-on-green.
 

@@ -45,8 +45,8 @@ so safety rests entirely on breaking links 1–2: removing the reviewer's *acces
   never a GitHub token. Keys are staged to files, read into memory, and unlinked before any
   reviewer runs. `persist-credentials: false` on every checkout. codex uses
   `shell_environment_policy.inherit=none`.
-- **I3** — the App token is split into two narrowly-scoped tokens (TauCeti `pull-requests:write`
-  to comment; TauCetiReview `contents:write` to persist), minted only *after* reviewers finish.
+- **I3** — the App token is split into two narrowly-scoped tokens (EpsilonEridani `pull-requests:write`
+  to comment; EpsilonEridaniReview `contents:write` to persist), minted only *after* reviewers finish.
 - **I4** — `/review` requires an exact command line (not a substring); per-PR daily round cap.
 - **I5** — reserve-before-spend: skip a rubric if spend-so-far plus a per-call ceiling would
   breach the daily budget; count every attempt; persist spend incrementally.
@@ -66,16 +66,16 @@ on `main` (no machine user account is used; a GitHub App cannot be a CODEOWNER).
 only when **all** of:
 
 - the newest marked scoreboard comment names the current commit and says every rubric approves;
-- TauCeti CI's trusted `scope` status is green on the current commit, and every changed path is
-  under `TauCeti/` or an explicitly allowed root pin; lakefiles are never allowed;
+- EpsilonEridani CI's trusted `scope` status is green on the current commit, and every changed path is
+  under `EpsilonEridani/` or an explicitly allowed root pin; lakefiles are never allowed;
 - any PR touching a Lake pin has a green trusted `bump-guard`;
 - CI's `build` check is green (status checks are **not** bypassed, only the review requirement).
 
 In EpsilonEridani production, review generation and auto-merge are independent. The `Review` workflow's
-enabled state plus the `CI_REVIEW_ENABLED` repository variable on `eic/TauCeti` control
+enabled state plus the `CI_REVIEW_ENABLED` repository variable on `eic/EpsilonEridani` control
 metered review generation; disabling it does not pause scoreboard-driven merging. The reusable
 review workflow's `enable_automerge` input is not the production merge path. To pause automated
-merging, disable both the `Auto-merge` and `Merge sweep` workflows in `eic/TauCeti`; both
+merging, disable both the `Auto-merge` and `Merge sweep` workflows in `eic/EpsilonEridani`; both
 must be re-enabled to resume normal operation.
 
 ## Residual risks (knowingly accepted)
@@ -101,18 +101,18 @@ must be re-enabled to resume normal operation.
 - **Admin bypass.** `enforce_admins` is off (human break-glass); the bot's token has no admin
   and cannot bypass status checks.
 
-## CI build sandbox (TauCeti)
+## CI build sandbox (EpsilonEridani)
 
-TauCeti CI compiles untrusted PR Lean, which runs arbitrary code at build time (elaboration,
+EpsilonEridani CI compiles untrusted PR Lean, which runs arbitrary code at build time (elaboration,
 `initialize`, macros, a PR `lakefile`). `pull_request` runs the **PR's own** workflow file, so a
 sandbox written into `ci.yml` would be defeatable (the PR strips it). The build therefore lives
-in a **trusted, base-defined** `pull_request_target` workflow (`TauCeti/.github/workflows/pr-build.yml`):
+in a **trusted, base-defined** `pull_request_target` workflow (`EpsilonEridani/.github/workflows/pr-build.yml`):
 
 - **Trusted definition + validated config.** The PR cannot change what runs. The build/audit use
   the base's `lakefile` and scripts, overlaying only validated sources plus forward-only manifest
   and toolchain pins. Any Lake configuration or other infrastructure path is routed to a human, so
   a PR cannot redefine what "build"/"axioms" mean to fake a green check.
-- **Sandbox.** PR `TauCeti/` code compiles only under **landrun** (pinned `v0.1.14` + SHA256),
+- **Sandbox.** PR `EpsilonEridani/` code compiles only under **landrun** (pinned `v0.1.14` + SHA256),
   offline (no network), writes confined to `base/.lake`, with `/dev` narrowed to specific nodes. A
   **fail-closed self-test** proves enforcement (out-of-tree write, `/dev/shm` write, and network
   all denied) before any PR code runs. Verified live: an adversarial build-time `#eval` had its

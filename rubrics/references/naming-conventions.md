@@ -1,6 +1,6 @@
 <!-- Vendored from
 https://github.com/leanprover-community/leanprover-community.github.io/blob/newsite/templates/contribute/naming.md
-on 2026-07-02. To refresh: re-fetch that file, replace everything above the "TauCeti addendum"
+on 2026-07-02. To refresh: re-fetch that file, replace everything above the "EpsilonEridani addendum"
 section, and keep the addendum. -->
 
 # Mathlib naming conventions
@@ -562,7 +562,7 @@ The same goes for addition, subtraction, negation, powers and compositions of fu
 
 ---
 
-## TauCeti addendum (local; not upstream text)
+## EpsilonEridani addendum (local; not upstream text)
 
 Standard suffix semantics the upstream document leaves implicit:
 

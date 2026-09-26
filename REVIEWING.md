@@ -33,22 +33,22 @@ With [uv](https://docs.astral.sh/uv/):
 
 ```bash
 # one-off, no install:
-uvx --from git+https://github.com/eic/TauCetiReview epsiloneridani-review 42
+uvx --from git+https://github.com/eic/EpsilonEridaniReview epsiloneridani-review 42
 
 # or install the command:
-uv tool install git+https://github.com/eic/TauCetiReview
+uv tool install git+https://github.com/eic/EpsilonEridaniReview
 epsiloneridani-review 42
 ```
 
 Or from a checkout (also how to hack on it):
 
 ```bash
-git clone https://github.com/eic/TauCetiReview
-cd TauCetiReview
+git clone https://github.com/eic/EpsilonEridaniReview
+cd EpsilonEridaniReview
 uv run epsiloneridani-review 42          # or: pipx install . / pip install .
 ```
 
-The rubrics and the review engine always come from a TauCetiReview checkout — the one you ran from
+The rubrics and the review engine always come from a EpsilonEridaniReview checkout — the one you ran from
 if it is one, otherwise a cached shallow clone under `~/.cache/epsiloneridani-review` that refreshes each
 run — so the rubrics never drift from the engine.
 
@@ -78,7 +78,7 @@ Add `--post` to publish. Useful flags:
 | `--kiro-model MODEL` | exact Kiro model ID; defaults to `gpt-5.6-sol`. Use `claude-opus-5` for Kiro's current Opus |
 | `--mode commit` | review only rubrics not already passing in the local store (default `manual` = all) |
 | `--no-mathlib` | skip fetching pinned Mathlib source; `reuse`/`naming` can't grep Mathlib |
-| `--repo owner/name` | review a different repo (default `eic/TauCeti`) |
+| `--repo owner/name` | review a different repo (default `eic/EpsilonEridani`) |
 | `--auth api` | use the matching `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `KIRO_API_KEY` instead of a browser login |
 | `--keep` | keep the temporary workspace for inspection |
 
@@ -146,7 +146,7 @@ results to [EpsilonEridaniData](https://github.com/eic/EpsilonEridaniData), and 
 evaluated against each other before being adopted.
 
     epsiloneridani-review 139 --shadow --label deepseek-arm --reviewer deepseek
-    epsiloneridani-review 139 --shadow --label rubrics-v2 --rubrics-sha <TauCetiReview commit>
+    epsiloneridani-review 139 --shadow --label rubrics-v2 --rubrics-sha <EpsilonEridaniReview commit>
 
 `--rubrics-sha` pins the rubrics *and* the engine to that commit (a cached per-SHA checkout),
 so an arm reruns exactly the code that existed then. Arms always run every requested rubric

@@ -57,7 +57,7 @@ def meta_block(kind, **payload):
 
 def rubric_url(prov, rubric=None):
     """Link to the rubrics pinned at the exact commit reviewed from, falling back to main."""
-    repo = (prov or {}).get("rubrics_repo", "eic/TauCetiReview")
+    repo = (prov or {}).get("rubrics_repo", "eic/EpsilonEridaniReview")
     sha = (prov or {}).get("rubrics_sha")
     if rubric:
         return f"https://github.com/{repo}/blob/{sha or 'main'}/rubrics/{rubric}.md"
