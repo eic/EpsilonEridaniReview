@@ -1,6 +1,6 @@
 # Reviewing a PR yourself
 
-Tau Ceti has a CI path that reviews with the metered Anthropic and OpenAI **APIs**, but production
+EpsilonEridani has a CI path that reviews with the metered Anthropic and OpenAI **APIs**, but production
 review generation is currently disabled there to conserve that budget. Reviews instead come from
 the trusted operator-run worker and from ad hoc command-line runs. `tauceti-review` lets a trusted
 person run the same review on their **own Claude / Codex / Kiro subscription**: the inference runs
@@ -117,7 +117,7 @@ gate and a contributor needs no TauCetiData write access for a posted review to 
 - **Subscription terms.** Driving a personal Claude/ChatGPT/Kiro subscription as an automated reviewer
   is fine for occasional, interactive, human-initiated runs like this. Standing it up as a 24/7
   self-hosted auto-reviewer is closer to API-tier usage and likely outside subscription terms — for
-  always-on review, enable Tau Ceti's CI path and use `--auth api` with API keys.
+  always-on review, enable EpsilonEridani's CI path and use `--auth api` with API keys.
 - **Reproducibility.** The clean room means your personal `~/.claude/CLAUDE.md`, `~/.codex/`
   config/`AGENTS.md`, skills, and MCP servers do **not** influence the review — two people running
   the same rubrics on the same PR get reviews that differ only by the model, not by their local

@@ -1,6 +1,6 @@
 # Security model
 
-This records the threat model, design decisions, and accepted residual risks for the Tau Ceti
+This records the threat model, design decisions, and accepted residual risks for the EpsilonEridani
 automated review system. It came out of a nine-angle adversarial audit (2026-06) and the
 hardening that followed (issues #7–#15, #22).
 
@@ -8,7 +8,7 @@ hardening that followed (issues #7–#15, #22).
 
 Production review generation currently runs from a trusted operator-run worker plus ad hoc trusted
 contributors' command lines. The reusable CI workflow (`.github/workflows/review.yml`) can perform
-the same metered-API review after a green build or an authorized `/review`, but Tau Ceti currently
+the same metered-API review after a green build or an authorized `/review`, but EpsilonEridani currently
 disables that generation path to conserve budget. Either path runs each rubric through a read-only
 reviewer CLI and posts a scoreboard plus per-rubric findings. The independent auto-merge workflows
 consume the posted scoreboard.
@@ -71,7 +71,7 @@ only when **all** of:
 - any PR touching a Lake pin has a green trusted `bump-guard`;
 - CI's `build` check is green (status checks are **not** bypassed, only the review requirement).
 
-In Tau Ceti production, review generation and auto-merge are independent. The `Review` workflow's
+In EpsilonEridani production, review generation and auto-merge are independent. The `Review` workflow's
 enabled state plus the `CI_REVIEW_ENABLED` repository variable on `TauCetiProject/TauCeti` control
 metered review generation; disabling it does not pause scoreboard-driven merging. The reusable
 review workflow's `enable_automerge` input is not the production merge path. To pause automated

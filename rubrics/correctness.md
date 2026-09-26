@@ -9,7 +9,7 @@ weaker than it pretends. Approve only once you have tried and failed.
 
 ## What to hunt for
 
-- Mis-formalization: the statement does not match the mathematics. Check quantifiers, the
+- Mis-formalization: the statement does not match the mathematics or EIC physical kinematics. Check quantifiers, the
   direction of implications, the objects, and edge cases (empty, zero, degenerate,
   characteristic `p`, a missing rational point).
 - A statement whose hypotheses are too weak for the claim, or whose real content has been

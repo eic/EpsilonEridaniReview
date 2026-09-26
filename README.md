@@ -1,11 +1,11 @@
-# Tau Ceti Review
+# EpsilonEridani Review
 
 The review rubrics and the machinery that runs review for
-[Tau Ceti](https://github.com/TauCetiProject/TauCeti), an AIs-welcome Lean 4 library
+[EpsilonEridani](https://github.com/TauCetiProject/TauCeti), an AIs-welcome Lean 4 library
 downstream of Mathlib. Humans own these rubrics; AIs author the code; the human roadmaps
 live in [TauCetiRoadmap](https://github.com/TauCetiProject/TauCetiRoadmap).
 
-Tau Ceti is being incubated by the [Lean FRO](https://lean-lang.org/fro/) in partnership with academic and
+EpsilonEridani is being incubated by the [Lean FRO](https://lean-lang.org/fro/) in partnership with academic and
 industry groups.
 
 ## How review works
@@ -25,7 +25,7 @@ see [`rubrics/README.md`](rubrics/README.md) for the list and which angles can b
 
 ## Reviewing it yourself
 
-Tau Ceti has a metered-API CI review workflow, but production review generation is currently
+EpsilonEridani has a metered-API CI review workflow, but production review generation is currently
 disabled there to conserve that budget. Reviews instead come from the trusted operator-run worker
 and from ad hoc command-line runs. A trusted contributor can run the same engine on their **own
 Claude / Codex / Kiro subscription** with the `tauceti-review` CLI — no API bill. See
@@ -37,7 +37,7 @@ uvx --from git+https://github.com/TauCetiProject/TauCetiReview tauceti-review 42
   --reviewer kiro --kiro-model gpt-5.6-sol
 ```
 
-With `--post`, the scoreboard comment is the live review verdict: Tau Ceti's auto-merge workflows
+With `--post`, the scoreboard comment is the live review verdict: EpsilonEridani's auto-merge workflows
 read the newest marked comment and require it to name the current head. Uploading the detailed run
 records to TauCetiData is separate archival for analytics and provenance; it does not determine
 whether a posted review counts.
@@ -73,4 +73,4 @@ counts at the rate in effect on each run's date. See [runner/COSTS.md](runner/CO
 - `runner/costs.py` — the `tauceti-review-costs` analytics CLI (live).
 - `runner/prices.json` — model rates; every dispatchable model must be priced (CI-enforced in `tests/`, and the engine fails fast on an unpriced model). Each archived run is stamped with a `prices_sha` so its cost is auditable.
 - The GitHub Actions workflows — reusable review and merge helpers plus `tests` (price coverage) —
-  live. Tau Ceti's caller currently disables metered review generation, as described above.
+  live. EpsilonEridani's caller currently disables metered review generation, as described above.

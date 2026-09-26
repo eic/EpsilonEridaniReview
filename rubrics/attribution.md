@@ -3,7 +3,7 @@
 Does the PR credit what it drew on? Uses `request_changes`, and may `block` when required
 credit is clearly absent.
 
-- Credit sources proactively. Formal: vendored Mathlib PR material, copied or closely adapted
+- Credit sources proactively. Formal: vendored upstream PR material, copied or closely adapted
   formalizations, and the central declarations a construction follows (not every Mathlib
   dependency, which every proof has). Informal: the paper, textbook, blueprint, notes, or
   Zulip discussion the work follows.
@@ -17,7 +17,7 @@ credit is clearly absent.
 
 ## Verdict
 
-- `block` when the PR vendors or closely follows identifiable existing work (a Mathlib PR, a
+- `block` when the PR vendors or closely follows identifiable existing work (an upstream PR, a
   paper, a prior formalization) with no credit.
 - `request_changes` when a central, non-obvious source is named in the description but not the
   code, or is clearly followed but unnamed (except the project's roadmap, which must be credited only in the PR description).

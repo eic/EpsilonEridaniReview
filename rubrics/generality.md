@@ -1,9 +1,9 @@
 # Generality
 
-Is the material at the natural Mathlib level? Uses `request_changes`. This is API quality;
+Is the material at the natural upstream level? Uses `request_changes`. This is API quality;
 leave assumptions that change the claim to correctness.
 
-- Flag assumptions that are visibly unused, stronger than standard Mathlib convention, or
+- Flag assumptions that are visibly unused, stronger than standard upstream (Mathlib/Physlib) convention, or
   contradicted by a nearby more general theorem. Show the stronger or weaker signature you
   want.
 - Prove the general result first and derive special cases; flag a proof duplicated for a

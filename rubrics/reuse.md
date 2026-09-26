@@ -1,6 +1,6 @@
 # Reuse and duplication
 
-Pull requests must not duplicate existing material from Mathlib or TauCeti, whether directly or via unnecessary thin wrappers. Whenever it is possible to reuse existing developments from Mathlib, it is essential to do so, and to ensure that new contributions make effective use of the Mathlib theory.
+Pull requests must not duplicate existing material from Mathlib or TauCeti, whether directly or via unnecessary thin wrappers. Whenever it is possible to reuse existing developments from Mathlib, Physlib, PhyslibAlpha, or TauCeti, it is essential to do so, and to ensure that new contributions make effective use of the upstream theories (Mathlib, Physlib, PhyslibAlpha, TauCeti).
 
 A new declaration that a located existing declaration directly replaces should result in a
 `block` review; every other form of duplication below is `request_changes`.
@@ -8,7 +8,7 @@ A new declaration that a located existing declaration directly replaces should r
 ## Detecting potential duplication
 
 Run each of these searches. Choose relevant search terms and grep (under
-`.lake/packages/mathlib` and `TauCeti/`) to verify.
+`.lake/packages/{mathlib,physlib,physlib_alpha,tauceti}` and `TauCeti/`) to verify.
 
 - For each new declaration, search for an existing one with the same content.
   (Sometimes you'll find something with a different name than expected, or a variant that
@@ -37,7 +37,7 @@ Name the existing lemmas you've found (and if necessary the one-liner showing ho
 If there are unnecessary duplications as public and private APIs, explain the overlaps.
 Make sure that all assertions about duplication are backed up by explicit references based
 on your grep searches; don't ask the author to search themselves.
-Not every hit is a defect: Mathlib itself keeps per-type restatements of generic lemmas, and
+Not every hit is a defect: Upstream libraries themselves keep per-type restatements of generic lemmas, and
 a specialization with genuine consumers can earn its place.
 
 ## Verdict

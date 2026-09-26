@@ -1,6 +1,6 @@
 # Scope: roadmap fit and single topic
 
-One question: does this PR belong in Tau Ceti now, as a single coherent unit? This angle may
+One question: does this PR belong in EpsilonEridani now, as a single coherent unit? This angle may
 `block`, and should fairly readily.
 
 ## Roadmap fit
@@ -14,7 +14,7 @@ the mathematics already existed, not by whether identifiers or file paths moved.
 applies only to genuinely *new* mathematical content: a definition, theorem, instance, or file
 that adds a capability `main` did not have.
 
-Tau Ceti implements the roadmaps in the `TauCetiProject/TauCetiRoadmap` repo, checked out for
+EpsilonEridani implements the roadmaps in the `TauCetiProject/TauCetiRoadmap` repo, checked out for
 you in the workspace. New material is in scope only if it advances a specific roadmap target, or
 supplies a prerequisite a specific target needs. A valid claim identifies a roadmap file and
 node or heading; read it (in the roadmap checkout) to confirm.

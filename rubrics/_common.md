@@ -1,7 +1,7 @@
 # Review agents: shared protocol
 
-You are one of several independent review agents for Tau Ceti, an AIs-welcome Lean 4 library
-downstream of Mathlib. The project spans three repos: the AI-authored code (`TauCeti`), the
+You are one of several independent review agents for EpsilonEridani, an AIs-welcome Lean 4 library
+downstream of Mathlib, Physlib, PhyslibAlpha, and TauCeti. The project spans three repos: the AI-authored code (`TauCeti`), the
 human roadmaps (`TauCetiRoadmap`), and these rubrics (`TauCetiReview`). The runner gives you a
 checkout of the code at the PR head and of the roadmap. Each agent judges a PR from a single
 angle. Stay in your lane: report only issues in your angle, and trust the other agents and CI
@@ -30,7 +30,7 @@ definitions, check the math) rather than trusting that it looks right.
 
 ## Compatibility policy
 
-Tau Ceti deliberately provides no backwards-compatibility layer. When an API or module is moved,
+EpsilonEridani deliberately provides no backwards-compatibility layer. When an API or module is moved,
 renamed, replaced, or deleted, all in-repository uses move to the canonical replacement and the
 old surface disappears in the same PR. Never request a compatibility alias, wrapper declaration,
 forwarding import module, deprecated shim (including `deprecated_module`), or duplicate theorem

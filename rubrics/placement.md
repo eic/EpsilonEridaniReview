@@ -30,7 +30,7 @@ imports whose wrongness is evident from the diff or the dependency topic.
 
 ## Imports
 
-- Flag only an evidently wrong import: unused, or a broad `import Mathlib` where
+- Flag only an evidently wrong import: unused, or a broad upstream import (like `import Mathlib` or `import Physlib`) where
   specific modules would do. Do not request a direct import for something already
   available transitively; that is redundant and `shake` removes it.
 

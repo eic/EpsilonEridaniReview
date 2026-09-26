@@ -4,7 +4,7 @@ You judge how proofs are written, not whether they are correct (the kernel owns 
 the correctness agent owns meaning). Uses `request_changes`.
 
 - Prefer robust automation (`grind`, `simp`, `omega`) over long chains of named-lemma
-  rewriting, which break on Mathlib renames. A single explicit `simp only` or `rw` step is
+  rewriting, which break on upstream library renames. A single explicit `simp only` or `rw` step is
   fine; the brittle chain is not.
 - `change` and `show` are a code smell: flag any used without a comment documenting why the
   goal cannot be reached otherwise. Prefer a rewrite to `rfl` or `convert` where one is
