@@ -4,7 +4,7 @@ name: merge-only
 # wait for any live review to finish before enqueueing. Dequeue only when the completed review state
 # becomes unsafe; starting another review does not eject an already-green queued PR.
 # Generates NO reviews, stages NO provider keys, and runs NO reviewer — reviews are produced by the
-# operator-run worker or by people running tauceti-review locally. This keeps auto-merge automatic
+# operator-run worker or by people running epsiloneridani-review locally. This keeps auto-merge automatic
 # with expensive CI review generation off.
 #
 # Enqueue, not direct merge: the queue retests each entry against the CURRENT main and merges in
@@ -26,7 +26,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: tauceti-merge-${{ inputs.pr }}
+  group: epsiloneridani-merge-${{ inputs.pr }}
   cancel-in-progress: false
 
 jobs:
@@ -86,7 +86,7 @@ jobs:
         run: |
           set -euo pipefail
           # The merge gate's verdict source is the PR's review COMMENTS: every reviewer (the worker,
-          # or anyone running tauceti-review with no repo write) posts one carrying a tauceti-meta:v1
+          # or anyone running epsiloneridani-review with no repo write) posts one carrying a epsiloneridani-meta:v1
           # block with head_sha + a full per-rubric `states` map. No access bar: a contributor's review
           # counts via their posted comment. The hard boundary a forged scoreboard cannot bypass remains
           # the build + scope + bump-guard checks below.

@@ -140,13 +140,13 @@ def _scoreboard(head, states, updated="2026-06-26T00:00:00Z", mode="commit", mer
         payload["merge_base_sha"] = merge_base
     if mode is not None:
         payload["mode"] = mode
-    meta = "<!--tauceti-meta:v1 " + json.dumps(payload) + "-->"
-    return [{"body": "<!--tauceti-scoreboard-->\n" + meta, "updated_at": updated}]
+    meta = "<!--epsiloneridani-meta:v1 " + json.dumps(payload) + "-->"
+    return [{"body": "<!--epsiloneridani-scoreboard-->\n" + meta, "updated_at": updated}]
 
 
 def _marker(head, expires_at):
     meta = json.dumps({"head": head, "expires_at": expires_at, "providers": ["codex"]})
-    return {"body": "<!--tauceti-review-in-progress " + meta + "-->"}
+    return {"body": "<!--epsiloneridani-review-in-progress " + meta + "-->"}
 
 
 def test_gate_is_shared_with_merge_only():
@@ -246,7 +246,7 @@ def test_live_review_marker_holds_enqueue_without_revoking_green_review():
     assert decision["review_safe"] and decision["merge"]
 
     # Malformed marker payloads fail harmlessly rather than crashing the gate.
-    comments.append({"body": "<!--tauceti-review-in-progress []-->"})
+    comments.append({"body": "<!--epsiloneridani-review-in-progress []-->"})
     decision = mfs.decide_from_comments(
         comments, head, required, diff, "SUCCESS", "", scope="SUCCESS", merge_base_sha=MB, now=2000)
     assert decision["review_safe"] and decision["merge"]
@@ -502,15 +502,15 @@ def test_count_evictions_ignores_our_own_reservation_removals():
     # real eviction. Counting ours would escalate an innocent PR to update_branch and needs-rebase.
     cutoff = _T0 - datetime.timedelta(hours=1)
     at = (_T0 - datetime.timedelta(minutes=10)).isoformat().replace("+00:00", "Z")
-    events = [{"event": "removed_from_merge_queue", "created_at": at, "actor": "tauceti-review-bot"},
+    events = [{"event": "removed_from_merge_queue", "created_at": at, "actor": "epsiloneridani-review-bot"},
               {"event": "removed_from_merge_queue", "created_at": at, "actor": "github-merge-queue"}]
-    assert sweep.count_evictions(events, cutoff, app_login="tauceti-review-bot") == 1
-    assert sweep.is_reservation_removal("Tauceti-Review-Bot", "tauceti-review-bot")
-    assert not sweep.is_reservation_removal(None, "tauceti-review-bot")
+    assert sweep.count_evictions(events, cutoff, app_login="epsiloneridani-review-bot") == 1
+    assert sweep.is_reservation_removal("Tauceti-Review-Bot", "epsiloneridani-review-bot")
+    assert not sweep.is_reservation_removal(None, "epsiloneridani-review-bot")
 
 
-def _request(head, author="tauceti-review-bot[bot]"):
-    return {"author": author, "body": f"Merge-queue recovery for head `{head[:7]}`.\n\n<!--tauceti-rebase:v1 {head}-->"}
+def _request(head, author="epsiloneridani-review-bot[bot]"):
+    return {"author": author, "body": f"Merge-queue recovery for head `{head[:7]}`.\n\n<!--epsiloneridani-rebase:v1 {head}-->"}
 
 
 def test_handoff_trust_and_head_binding():
@@ -529,7 +529,7 @@ def test_fork_handoff_retries_label_without_reposting_and_stops_at_head():
     def gh(args):
         calls.append(args)
         if args[:2] == ["pr", "comment"]:
-            comments.append({"author": "tauceti-review-bot[bot]", "body": args[-1]})
+            comments.append({"author": "epsiloneridani-review-bot[bot]", "body": args[-1]})
         fail = label_fails and args[:2] == ["pr", "edit"]
         return SimpleNamespace(returncode=int(fail), stdout="", stderr="label error" if fail else "")
 
@@ -594,7 +594,7 @@ def test_main_hands_off_once_then_waits_until_push():
     def gh(args):
         mutations.append(args[:2])
         if args[:2] == ["pr", "comment"]:
-            comments.append({"author": "tauceti-review-bot[bot]", "body": args[-1]})
+            comments.append({"author": "epsiloneridani-review-bot[bot]", "body": args[-1]})
         elif "--add-label" in args:
             labels.append({"name": "needs-rebase"})
         elif "--remove-label" in args:
@@ -682,7 +682,7 @@ def test_up_to_date_eviction_waits_for_human_without_worker_request():
 
     def gh(args):
         if args[:2] == ["pr", "comment"]:
-            comments.append({"author": "tauceti-review-bot[bot]", "body": args[-1]})
+            comments.append({"author": "epsiloneridani-review-bot[bot]", "body": args[-1]})
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
     with patch.object(sweep, "DRY_RUN", False), patch.object(sweep, "gh", gh):

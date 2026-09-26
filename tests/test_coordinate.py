@@ -18,7 +18,7 @@ H = "abcdef1234567890abcdef1234567890abcdef12"  # full-length head; matching is 
 
 
 def marker(cid, nonce, providers, head=H, exp=9_999_999_999):  # far future unless a test overrides
-    body = ('x <!--tauceti-review-in-progress '
+    body = ('x <!--epsiloneridani-review-in-progress '
             + cli.json.dumps({"nonce": nonce, "providers": providers, "head": head,
                               "expires_at": exp})
             + '--> y')

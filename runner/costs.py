@@ -7,7 +7,7 @@ Three data sources, picked automatically:
     archive: ``records/runs/<pr>/<run_id>.json`` with a full ``usage`` block,
     ``started_at``, ``model`` and ``cost_usd``. Reproducible by anyone; defaults to
     the production arm and de-dupes by ``dedupe_key``. ``--source data --data-dir``.
-  * **store** — the engine's local cache, ``~/.cache/tauceti-review/store/<repo>/``
+  * **store** — the engine's local cache, ``~/.cache/epsiloneridani-review/store/<repo>/``
     (``reviews/<pr>/<round>/<rubric>.json`` + ``ledger.json``). Fast and local but
     ephemeral and single-machine.
   * **logs** (fallback) — ``task-*.log`` ``ROUND n ... cost $X`` lines. Dollars
@@ -32,14 +32,14 @@ Only the REVIEW side is accounted, by request — authoring/fixing spend is igno
 Stdlib-only, matching the rest of the engine — it shells out to ``gh`` and reads
 the local store; no third-party Python dependencies.
 
-Usage (installed as the ``tauceti-review-costs`` console script, or
+Usage (installed as the ``epsiloneridani-review-costs`` console script, or
 ``python3 -m runner.costs``)::
 
-    tauceti-review-costs all                 # ingest + refresh PRs + report
-    tauceti-review-costs ingest [--source auto|data|store|logs] [--data-dir PATH] [--store PATH]
-    tauceti-review-costs prs                  # PR outcomes/LOC from GitHub (cached)
-    tauceti-review-costs report [--window day|week] [--csv FILE]
-    tauceti-review-costs graph [--out FILE]   # dependency-free SVG
+    epsiloneridani-review-costs all                 # ingest + refresh PRs + report
+    epsiloneridani-review-costs ingest [--source auto|data|store|logs] [--data-dir PATH] [--store PATH]
+    epsiloneridani-review-costs prs                  # PR outcomes/LOC from GitHub (cached)
+    epsiloneridani-review-costs report [--window day|week] [--csv FILE]
+    epsiloneridani-review-costs graph [--out FILE]   # dependency-free SVG
 """
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ from pathlib import Path
 # from. (costs runs as `runner.costs` / `python3 -m runner.costs`, so this package import resolves.)
 from runner.pricing import load_price_windows as load_history
 
-CACHE = Path.home() / ".cache" / "tauceti-review"
+CACHE = Path.home() / ".cache" / "epsiloneridani-review"
 DEFAULT_DB = CACHE / "review-costs.db"
 DEFAULT_OUT = CACHE / "review-costs.svg"
 DEFAULT_REPO = "TauCetiProject/TauCeti"
@@ -105,7 +105,7 @@ COST_RE = re.compile(
 
 
 def store_for(repo: str) -> Path:
-    return Path.home() / ".cache" / "tauceti-review" / "store" / repo.replace("/", "__")
+    return Path.home() / ".cache" / "epsiloneridani-review" / "store" / repo.replace("/", "__")
 
 
 # --------------------------------------------------------------------------- DB
@@ -797,7 +797,7 @@ def main(argv=None):
     p.add_argument("--db", type=Path, default=DEFAULT_DB)
     p.add_argument("--repo", default=DEFAULT_REPO)
     p.add_argument("--store", type=Path, default=None,
-                   help="review-engine store dir (default ~/.cache/tauceti-review/store/<repo>)")
+                   help="review-engine store dir (default ~/.cache/epsiloneridani-review/store/<repo>)")
     p.add_argument("--data-dir", type=Path, default=None,
                    help="TauCetiData checkout — the durable, public, reproducible source")
     p.add_argument("--source", choices=["auto", "data", "store", "logs"], default="auto")

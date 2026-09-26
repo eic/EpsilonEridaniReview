@@ -2,7 +2,7 @@
 
 EpsilonEridani has a CI path that reviews with the metered Anthropic and OpenAI **APIs**, but production
 review generation is currently disabled there to conserve that budget. Reviews instead come from
-the trusted operator-run worker and from ad hoc command-line runs. `tauceti-review` lets a trusted
+the trusted operator-run worker and from ad hoc command-line runs. `epsiloneridani-review` lets a trusted
 person run the same review on their **own Claude / Codex / Kiro subscription**: the inference runs
 through the locally logged-in provider CLI, so there is no per-token bill. It is the same engine,
 same rubrics, same scoreboard and per-rubric threads — only the inference auth and who posts change.
@@ -33,11 +33,11 @@ With [uv](https://docs.astral.sh/uv/):
 
 ```bash
 # one-off, no install:
-uvx --from git+https://github.com/TauCetiProject/TauCetiReview tauceti-review 42
+uvx --from git+https://github.com/TauCetiProject/TauCetiReview epsiloneridani-review 42
 
 # or install the command:
 uv tool install git+https://github.com/TauCetiProject/TauCetiReview
-tauceti-review 42
+epsiloneridani-review 42
 ```
 
 Or from a checkout (also how to hack on it):
@@ -45,25 +45,25 @@ Or from a checkout (also how to hack on it):
 ```bash
 git clone https://github.com/TauCetiProject/TauCetiReview
 cd TauCetiReview
-uv run tauceti-review 42          # or: pipx install . / pip install .
+uv run epsiloneridani-review 42          # or: pipx install . / pip install .
 ```
 
 The rubrics and the review engine always come from a TauCetiReview checkout — the one you ran from
-if it is one, otherwise a cached shallow clone under `~/.cache/tauceti-review` that refreshes each
+if it is one, otherwise a cached shallow clone under `~/.cache/epsiloneridani-review` that refreshes each
 run — so the rubrics never drift from the engine.
 
 ## Use
 
 ```bash
-tauceti-review 42                       # review PR #42, PRINT the verdicts — posts nothing
-tauceti-review 42 --post                # also post the scoreboard + threads, as you
-tauceti-review 42 --rubrics scope,correctness,reuse
-tauceti-review 42 --reviewer claude     # use only Claude even if both are installed
-tauceti-review 42 --reviewer claude --claude-model claude-fable-5-1
-tauceti-review 42 --reviewer kiro --kiro-model gpt-5.6-sol
-tauceti-review 42 --reviewer kiro --kiro-model claude-opus-5
-tauceti-review 42 --reviewer deepseek   # use DeepSeek via OpenRouter + the `pi` agent
-tauceti-review 42 --no-mathlib          # skip the Mathlib clone (faster; weaker reuse checks)
+epsiloneridani-review 42                       # review PR #42, PRINT the verdicts — posts nothing
+epsiloneridani-review 42 --post                # also post the scoreboard + threads, as you
+epsiloneridani-review 42 --rubrics scope,correctness,reuse
+epsiloneridani-review 42 --reviewer claude     # use only Claude even if both are installed
+epsiloneridani-review 42 --reviewer claude --claude-model claude-fable-5-1
+epsiloneridani-review 42 --reviewer kiro --kiro-model gpt-5.6-sol
+epsiloneridani-review 42 --reviewer kiro --kiro-model claude-opus-5
+epsiloneridani-review 42 --reviewer deepseek   # use DeepSeek via OpenRouter + the `pi` agent
+epsiloneridani-review 42 --no-mathlib          # skip the Mathlib clone (faster; weaker reuse checks)
 ```
 
 It **defaults to a dry run**: it prints the scoreboard and each rubric's thread and posts nothing.
@@ -145,8 +145,8 @@ results to [TauCetiData](https://github.com/TauCetiProject/TauCetiData), and pos
 — the PR thread and the production review state are untouched. This is how review variants are
 evaluated against each other before being adopted.
 
-    tauceti-review 139 --shadow --label deepseek-arm --reviewer deepseek
-    tauceti-review 139 --shadow --label rubrics-v2 --rubrics-sha <TauCetiReview commit>
+    epsiloneridani-review 139 --shadow --label deepseek-arm --reviewer deepseek
+    epsiloneridani-review 139 --shadow --label rubrics-v2 --rubrics-sha <TauCetiReview commit>
 
 `--rubrics-sha` pins the rubrics *and* the engine to that commit (a cached per-SHA checkout),
 so an arm reruns exactly the code that existed then. Arms always run every requested rubric

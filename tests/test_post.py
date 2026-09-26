@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The scoreboard poster must publish exactly one comment per PR, editing OUR own in place.
 
-Guards kim-em/TauCetiWorker#3: a review run whose local store lacks the scoreboard comment id used
+Guards kim-em/EpsilonEridaniWorker#3: a review run whose local store lacks the scoreboard comment id used
 to POST a duplicate. It now discovers the scoreboard WE authored from GitHub, edits it, and collapses
 our older duplicates — and only ever mutates comments we authored. Dependency-free — run with
 `python tests/test_post.py` or under pytest.
@@ -184,7 +184,7 @@ def _fake_run(stdout, code=0):
 
 def test_find_parses_all_authors_and_orders(monkeypatch=None):
     lines = "\n".join([
-        '{"id":200,"login":"tauceti-review-bot[bot]","updated_at":"2026-06-18T02:00:00Z"}',
+        '{"id":200,"login":"epsiloneridani-review-bot[bot]","updated_at":"2026-06-18T02:00:00Z"}',
         '{"id":150,"login":"alice","updated_at":"2026-06-18T01:00:00Z"}',
         '{"id":120,"login":"mallory","updated_at":"2026-06-18T03:00:00Z"}',
     ])
@@ -217,8 +217,8 @@ def test_find_returns_none_on_malformed_response():
 
 
 def test_find_review_roots_extracts_identity_head_and_run():
-    body = ('<!--tauceti-rubric:api-design-->\ntext\n'
-            '<!--tauceti-meta:v1 {"head_sha":"abc","runs":[{"id":"r-1"}]}-->')
+    body = ('<!--epsiloneridani-rubric:api-design-->\ntext\n'
+            '<!--epsiloneridani-meta:v1 {"head_sha":"abc","runs":[{"id":"r-1"}]}-->')
     comment = {"id": 7, "node_id": "N7", "path": "x.lean", "body": body,
                "commit_id": "old", "in_reply_to_id": None,
                "user": {"login": "bot"}, "created_at": "2026-08-04T00:00:00Z"}
@@ -236,7 +236,7 @@ def test_find_review_roots_extracts_identity_head_and_run():
 # --- transactional publication -----------------------------------------------------------------
 
 def _post_fixture(*, thread_id=None, pending="r-new"):
-    root = pathlib.Path(tempfile.mkdtemp(prefix="tauceti-post-"))
+    root = pathlib.Path(tempfile.mkdtemp(prefix="epsiloneridani-post-"))
     body = root / "thread.md"; body.write_text("thread")
     scoreboard = root / "scoreboard.md"; scoreboard.write_text("scoreboard")
     cf = {"rubric": "api-design", "run_id": "r-new",

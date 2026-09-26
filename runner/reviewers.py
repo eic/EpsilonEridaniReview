@@ -1,4 +1,4 @@
-"""tauceti-review reviewers — split from review.py (behaviour-preserving).
+"""epsiloneridani-review reviewers — split from review.py (behaviour-preserving).
 
 Run as a script (runner/ on sys.path), so imports are flat siblings, not package-relative."""
 
@@ -28,7 +28,7 @@ PI_TOOLS = (_pi_tools_env
 # as its reviewer returns, and sweeps stragglers (from crashes/kills) at startup — see
 # cleanup_rev_home / sweep_rev_homes. A review attempt never runs for hours, so anything older than
 # REV_HOME_MAX_AGE_S is certainly abandoned.
-REV_HOME_BASE = os.path.join(os.path.expanduser("~"), ".tauceti-rev")
+REV_HOME_BASE = os.path.join(os.path.expanduser("~"), ".epsiloneridani-rev")
 
 REV_HOME_MAX_AGE_S = 6 * 3600
 

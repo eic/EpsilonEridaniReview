@@ -66,34 +66,34 @@ MAX_HOLD = datetime.timedelta(hours=int(os.environ.get("MAX_HOLD_HOURS", "3")))
 # chronically-failing bump would otherwise reserve, fail, update, and reserve again without limit.
 MAX_RESERVATIONS = int(os.environ.get("MAX_RESERVATIONS", "3"))
 # Login of the App this runner acts as; queue removals BY it are reservation cleanup, not evictions.
-RESERVATION_ACTOR = os.environ.get("RESERVATION_ACTOR", "tauceti-review-bot")
+RESERVATION_ACTOR = os.environ.get("RESERVATION_ACTOR", "epsiloneridani-review-bot")
 LAPSED_LABEL = "queue-lapsed"
 EXHAUSTED_LABEL = "queue-exhausted"
 KEEP_LABELS = {"keep", "hold", "wip", "human", "do-not-close"}
 NEEDS_REBASE_LABEL = "needs-rebase"
 EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
-REBASE_MARKER_RE = re.compile(r"^<!--tauceti-rebase:v1 ([0-9a-f]{40})-->$", re.M)
-STALLED_MARKER_RE = re.compile(r"^<!--tauceti-merge-stalled:v1 ([0-9a-f]{40})-->$", re.M)
+REBASE_MARKER_RE = re.compile(r"^<!--epsiloneridani-rebase:v1 ([0-9a-f]{40})-->$", re.M)
+STALLED_MARKER_RE = re.compile(r"^<!--epsiloneridani-merge-stalled:v1 ([0-9a-f]{40})-->$", re.M)
 STALLED_COMMENT = (
     "Merge-queue recovery for head `{sha}`: repeated queue evictions, but this branch already "
     "includes current `main`. A maintainer needs to inspect the merge-group failure; no worker "
     "rebase is requested. The sweep will wait at this head. Add `keep` to pause recovery.\n\n"
-    "<!--tauceti-merge-stalled:v1 {head}-->")
+    "<!--epsiloneridani-merge-stalled:v1 {head}-->")
 REBASE_COMMENT = (
     "Merge-queue recovery for head `{sha}`: {reason} "
     "The author or their worker should merge current `main`, reconcile overlapping declarations, "
     "and push only after the build and axiom checks pass. This request uses the worker's existing "
     "per-PR rebase-attempt budget; exhaustion requires human attention. The sweep will wait on this head "
     "instead of retrying the same operation. A new head returns to normal CI and review. "
-    "Workers predating this handoff support need a TauCetiWorker update and restart. "
+    "Workers predating this handoff support need a EpsilonEridaniWorker update and restart. "
     "The fork push credential must permit workflow changes inherited from main. "
-    "Add `keep` to pause recovery.\n\n<!--tauceti-rebase:v1 {head}-->")
+    "Add `keep` to pause recovery.\n\n<!--epsiloneridani-rebase:v1 {head}-->")
 
 
 def rebase_request_heads(comments, *, stalled=False):
     """Only the sweep App can issue a head-bound handoff to contributor workers."""
     marker = STALLED_MARKER_RE if stalled else REBASE_MARKER_RE
-    return {head for c in comments if c.get("author") == "tauceti-review-bot[bot]"
+    return {head for c in comments if c.get("author") == "epsiloneridani-review-bot[bot]"
             and (c.get("body") or "").startswith("Merge-queue recovery for head `")
             for head in marker.findall(c.get("body") or "")}
 

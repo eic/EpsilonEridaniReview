@@ -1,5 +1,5 @@
 [project]
-name = "tauceti-review"
+name = "epsiloneridani-review"
 version = "0.1.0"
 description = "Run the Tau Ceti AI code review on a PR using your own Claude/Codex/Kiro subscription."
 readme = "REVIEWING.md"
@@ -9,8 +9,8 @@ license = { text = "Apache-2.0" }
 dependencies = []
 
 [project.scripts]
-tauceti-review = "runner.cli:main"
-tauceti-review-costs = "runner.costs:main"
+epsiloneridani-review = "runner.cli:main"
+epsiloneridani-review-costs = "runner.costs:main"
 
 [build-system]
 requires = ["setuptools>=68"]

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""`tauceti-review` — run the Tau Ceti AI review on a PR with your own subscription.
+"""`epsiloneridani-review` — run the Tau Ceti AI review on a PR with your own subscription.
 
 This is the user-facing front end to the same review engine CI runs (`runner/review.py` +
 `runner/post.py`). Where CI bills the Anthropic / OpenAI APIs, this drives the locally
@@ -7,9 +7,9 @@ logged-in `claude` and `codex` CLIs, so the inference runs on *your* subscriptio
 metered cost. You stay the trusted party: it reviews read-only, posts under your own GitHub
 identity, and defaults to a dry run that prints the verdicts without touching the PR.
 
-    tauceti-review 42                 # review PR #42, print the verdicts (no posting)
-    tauceti-review 42 --post          # also post the scoreboard + threads as you
-    tauceti-review 42 --rubrics scope,correctness,reuse --no-mathlib
+    epsiloneridani-review 42                 # review PR #42, print the verdicts (no posting)
+    epsiloneridani-review 42 --post          # also post the scoreboard + threads as you
+    epsiloneridani-review 42 --rubrics scope,correctness,reuse --no-mathlib
 
 It assembles the same reviewer workspace CI does — the PR source at its head, the roadmap, and
 (unless --no-mathlib) the pinned Mathlib source for grep — then invokes the engine in
@@ -45,7 +45,7 @@ REVIEW_REPO = "TauCetiProject/TauCetiReview"
 DEFAULT_CODE_REPO = "TauCetiProject/TauCeti"
 DEFAULT_ROADMAP_REPO = "TauCetiProject/TauCetiRoadmap"
 CACHE_DIR = pathlib.Path(
-    os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))) / "tauceti-review"
+    os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))) / "epsiloneridani-review"
 
 # A "review in progress" marker comment de-contends concurrent reviewers without any write access
 # beyond commenting: an independent reviewer may have repo write NOWHERE, but anyone who can review a
@@ -57,15 +57,15 @@ CACHE_DIR = pathlib.Path(
 # de-contention key. Trust is NOT gated on author association, matching the scoreboard merge gate:
 # a forged marker can at worst delay a review by its TTL — no inference runs, no data lands —
 # so honoring anyone's marker is what lets a fleet of non-collaborators coordinate at all.
-COORD_MARKER = "tauceti-review-in-progress"
-COORD_RE = re.compile(r"<!--tauceti-review-in-progress (.*?)-->", re.S)
+COORD_MARKER = "epsiloneridani-review-in-progress"
+COORD_RE = re.compile(r"<!--epsiloneridani-review-in-progress (.*?)-->", re.S)
 COORD_TTL = int(os.environ.get("TAUCETI_REVIEW_INPROGRESS_TTL", "1800"))  # 30 min; > a slow review
 COORD_SETTLE_S = 5.0  # let simultaneously-posted markers propagate before inference starts
 COORD_SETTLE_POLL_S = 0.5
 
 
 def die(msg):
-    print(f"tauceti-review: {msg}", file=sys.stderr)
+    print(f"epsiloneridani-review: {msg}", file=sys.stderr)
     sys.exit(1)
 
 
@@ -215,7 +215,7 @@ def rubrics_repo_sha(repo_dir):
 def fetch_thread_replies(repo, pr):
     """Gather author replies on the per-rubric review threads from GitHub, keyed by rubric, so a
     re-review audits the author's contest rather than re-judging the diff blind. A thread root
-    carries a `<!--tauceti-rubric:NAME-->` marker; a reply is any review comment whose
+    carries a `<!--epsiloneridani-rubric:NAME-->` marker; a reply is any review comment whose
     `in_reply_to_id` points at such a root.
 
     Paginated (`--paginate --jq '.[]'` emits one compact comment per line — a bare --paginate would
@@ -223,7 +223,7 @@ def fetch_thread_replies(repo, pr):
     page one. Each reply keeps its monotonic `id` (the dedupe/watermark key), its `ts`, and the
     thread `root_id` (so a re-review can answer in-thread even with a fresh/cross-machine store that
     has not recorded the root). Our own comments are dropped by MARKER, never by author login: a
-    contest answer carries `tauceti-reply:` and a thread root carries `tauceti-rubric:`; filtering by
+    contest answer carries `epsiloneridani-reply:` and a thread root carries `epsiloneridani-rubric:`; filtering by
     a poster login would wrongly drop a contest from someone who happens to share that login."""
     r = run(["gh", "api", "--paginate", "--jq", ".[]",
              f"/repos/{repo}/pulls/{pr}/comments?per_page=100"],
@@ -239,7 +239,7 @@ def fetch_thread_replies(repo, pr):
     root_rubric = {}
     for c in comments:
         if c.get("in_reply_to_id") is None:
-            m = re.search(r"tauceti-rubric:([a-z][a-z-]*?)\s*-->", c.get("body", ""))
+            m = re.search(r"epsiloneridani-rubric:([a-z][a-z-]*?)\s*-->", c.get("body", ""))
             if m:
                 root_rubric[c["id"]] = m.group(1)
     replies = {}
@@ -249,7 +249,7 @@ def fetch_thread_replies(repo, pr):
         if not rubric:
             continue
         body = c.get("body", "") or ""
-        if "tauceti-reply:" in body or "tauceti-rubric:" in body:
+        if "epsiloneridani-reply:" in body or "epsiloneridani-rubric:" in body:
             continue  # our own contest answer / a nested root — never a fresh contest
         replies.setdefault(rubric, []).append(
             {"id": c.get("id"), "ts": c.get("created_at", ""), "root_id": root,
@@ -427,7 +427,7 @@ def coordinate(repo, pr, head, avail, submitted_by):
 
 def main():
     ap = argparse.ArgumentParser(
-        prog="tauceti-review",
+        prog="epsiloneridani-review",
         description="Run the Tau Ceti AI review on a PR using your own claude/codex subscription.")
     ap.add_argument("pr", help="PR number to review")
     ap.add_argument("--repo", default=DEFAULT_CODE_REPO, help="code repo (owner/name)")
@@ -538,7 +538,7 @@ def main():
             die("--sync-only requires --store <dir>.")
         outbox = pathlib.Path(a.store) / "outbox"
         if not outbox.is_dir() or not any(p.is_file() for p in outbox.rglob("*")):
-            print("tauceti-review --sync-only: outbox empty; nothing to sync")
+            print("epsiloneridani-review --sync-only: outbox empty; nothing to sync")
             return
         repo_dir = engine_at(a.rubrics_sha) if a.rubrics_sha else resolve_repo_dir(a.repo_dir)
         data_dir = a.data_dir or str(CACHE_DIR / "data" / "TauCetiData")
@@ -612,7 +612,7 @@ def main():
           + (f" (pinned @ {a.rubrics_sha[:12]})" if a.rubrics_sha else ""), file=sys.stderr)
 
     work = pathlib.Path(a.workdir) if a.workdir else pathlib.Path(tempfile.mkdtemp(
-        prefix=f"tauceti-review-{a.pr}-"))
+        prefix=f"epsiloneridani-review-{a.pr}-"))
     work.mkdir(parents=True, exist_ok=True)
     print(f"workspace: {work}", file=sys.stderr)
 

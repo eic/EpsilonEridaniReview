@@ -1,4 +1,4 @@
-# Review-cost analytics (`tauceti-review-costs`)
+# Review-cost analytics (`epsiloneridani-review-costs`)
 
 Attribute the review engine's spend — **tokens *and* imputed dollars, tracked
 separately** — to the PRs it reviewed and to the lines of code that merged. It
@@ -17,7 +17,7 @@ It answers:
 | source | tokens | $ | when |
 |--------|:------:|:-:|------|
 | **data** a [TauCetiData](https://github.com/TauCetiProject/TauCetiData) checkout | ✅ | ✅ | **canonical** — durable, public, reproducible (`--source data --data-dir …`) |
-| **store** `~/.cache/tauceti-review/store/<repo>/` | ✅ | ✅ | the live engine cache — fast, local, single-machine |
+| **store** `~/.cache/epsiloneridani-review/store/<repo>/` | ✅ | ✅ | the live engine cache — fast, local, single-machine |
 | **logs** `task-*.log` | ❌ | ✅ | last-resort fallback, dollars only (`--source logs --logs-dir …`) |
 
 The **data** source is the one to prefer: TauCetiData is the durable, public,
@@ -39,7 +39,7 @@ mixing, so nothing is double-counted.
 
 ```bash
 git clone --depth 1 https://github.com/TauCetiProject/TauCetiData /tmp/TauCetiData
-tauceti-review-costs --source data --data-dir /tmp/TauCetiData all
+epsiloneridani-review-costs --source data --data-dir /tmp/TauCetiData all
 ```
 
 ### Pricing — cost is derived from tokens, priced as of each run's date
@@ -88,17 +88,17 @@ figure sits far below tokens×list-price.
 
 ```bash
 # installed console script (after `pip install -e .` / uvx), or `python3 -m runner.costs`
-tauceti-review-costs all            # ingest + refresh PRs + report
-tauceti-review-costs all --graph    # also write ~/.cache/tauceti-review/review-costs.svg
+epsiloneridani-review-costs all            # ingest + refresh PRs + report
+epsiloneridani-review-costs all --graph    # also write ~/.cache/epsiloneridani-review/review-costs.svg
 
-tauceti-review-costs ingest                 # store (or logs) -> DB
-tauceti-review-costs prs                      # PR outcomes/LOC from GitHub (cached)
-tauceti-review-costs report --window week     # day|week
-tauceti-review-costs report --csv out.csv     # per-PR CSV (tokens + $)
-tauceti-review-costs graph --out g.svg         # dependency-free SVG (4 panels)
+epsiloneridani-review-costs ingest                 # store (or logs) -> DB
+epsiloneridani-review-costs prs                      # PR outcomes/LOC from GitHub (cached)
+epsiloneridani-review-costs report --window week     # day|week
+epsiloneridani-review-costs report --csv out.csv     # per-PR CSV (tokens + $)
+epsiloneridani-review-costs graph --out g.svg         # dependency-free SVG (4 panels)
 ```
 
-Defaults: DB and graph live under `~/.cache/tauceti-review/`; `--repo` is
+Defaults: DB and graph live under `~/.cache/epsiloneridani-review/`; `--repo` is
 `TauCetiProject/TauCeti`; `--store` defaults to that repo's store slug. PR author
 is read from the body trailer (`🤖 Prepared with Codex` / `Claude Code`), since
 commits land under the contributor's account.
@@ -111,6 +111,6 @@ commits land under the contributor's account.
 
 ```bash
 # most token-hungry rubrics
-sqlite3 ~/.cache/tauceti-review/review-costs.db \
+sqlite3 ~/.cache/epsiloneridani-review/review-costs.db \
   "SELECT rubric, SUM(output_tokens) o FROM rubric_runs GROUP BY rubric ORDER BY o DESC;"
 ```

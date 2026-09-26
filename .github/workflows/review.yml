@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: tauceti-review
+  group: epsiloneridani-review
   cancel-in-progress: false
 
 jobs:
@@ -290,7 +290,7 @@ jobs:
         env: { TOKEN: "${{ steps.archive_token.outputs.token }}" }
         run: |
           if [ -d store/outbox ] && [ -n "$TOKEN" ]; then
-            python3 runner/archive.py sync --store store --data-dir "$RUNNER_TEMP/tauceti-data" \
+            python3 runner/archive.py sync --store store --data-dir "$RUNNER_TEMP/epsiloneridani-data" \
               --remote "https://x-access-token:${TOKEN}@github.com/TauCetiProject/TauCetiData"
           else
             echo "no outbox or no token; skipping archive sync"
@@ -313,8 +313,8 @@ jobs:
         run: |
           cd store
           git add -A
-          git -c user.name="tauceti-review-bot[bot]" \
-              -c user.email="tauceti-review-bot[bot]@users.noreply.github.com" \
+          git -c user.name="epsiloneridani-review-bot[bot]" \
+              -c user.email="epsiloneridani-review-bot[bot]@users.noreply.github.com" \
               commit -q -m "review: PR #${PR}" || { echo "nothing to commit"; exit 0; }
           git push "https://x-access-token:${TOKEN}@github.com/TauCetiProject/TauCetiReview" HEAD:reviews
 

@@ -29,7 +29,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: tauceti-merge-sweep
+  group: epsiloneridani-merge-sweep
   cancel-in-progress: false
 
 jobs:

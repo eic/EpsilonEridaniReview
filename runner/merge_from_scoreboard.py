@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Compute the auto-merge decision from the PR's scoreboard COMMENTS (the live verdict source).
 
-Any reviewer — the worker, or anyone running tauceti-review — posts a scoreboard comment on the PR
-carrying a `<!--tauceti-meta:v1 {...}-->` block with `head_sha` and a full per-rubric `states` map. The
+Any reviewer — the worker, or anyone running epsiloneridani-review — posts a scoreboard comment on the PR
+carrying a `<!--epsiloneridani-meta:v1 {...}-->` block with `head_sha` and a full per-rubric `states` map. The
 newest completed scoreboard at the current head is the verdict: a later completed review supersedes
 an earlier one instead of making every disagreement a permanent veto. An unexpired
 review-in-progress marker delays initial enqueue, but does not revoke an already-completed green
@@ -31,9 +31,9 @@ import time
 from merge import read_paths
 from review import DEFAULT_RUBRICS, decide_merge
 
-SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
-META_RE = re.compile(r"<!--tauceti-meta:v1 (.*?)-->", re.S)
-COORD_RE = re.compile(r"<!--tauceti-review-in-progress (.*?)-->", re.S)
+SCOREBOARD_MARKER = "<!--epsiloneridani-scoreboard-->"
+META_RE = re.compile(r"<!--epsiloneridani-meta:v1 (.*?)-->", re.S)
+COORD_RE = re.compile(r"<!--epsiloneridani-review-in-progress (.*?)-->", re.S)
 # A rendered scoreboard row: | <icon> | [rubric](url) | <state word> | `judge` | summary |
 TABLE_ROW_RE = re.compile(r"^\|[^|]*\|\s*\[?([a-z0-9-]+)\]?[^|]*\|\s*([^|]+?)\s*\|", re.M)
 WORD_STATE = {"approved": "green", "changes requested": "blocking_request",

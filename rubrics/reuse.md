@@ -8,7 +8,7 @@ A new declaration that a located existing declaration directly replaces should r
 ## Detecting potential duplication
 
 Run each of these searches. Choose relevant search terms and grep (under
-`.lake/packages/{mathlib,physlib,physlib_alpha,tauceti}` and `TauCeti/`) to verify.
+`.lake/packages/{mathlib,physlib,physlib_alpha,epsiloneridani}` and `TauCeti/`) to verify.
 
 - For each new declaration, search for an existing one with the same content.
   (Sometimes you'll find something with a different name than expected, or a variant that

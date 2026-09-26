@@ -1,4 +1,4 @@
-"""tauceti-review casefile — split from review.py (behaviour-preserving).
+"""epsiloneridani-review casefile — split from review.py (behaviour-preserving).
 
 Run as a script (runner/ on sys.path), so imports are flat siblings, not package-relative."""
 import hashlib

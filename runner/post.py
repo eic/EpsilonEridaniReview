@@ -23,9 +23,9 @@ import argparse, datetime, hashlib, json, os, pathlib, re, subprocess, sys
 
 import archive
 
-REPLY_MARKER_RE = re.compile(r"<!--tauceti-reply:([a-z][a-z-]*):through:(\d+)-->")
-RUBRIC_MARKER_RE = re.compile(r"<!--tauceti-rubric:([a-z][a-z-]*)-->")
-META_RE = re.compile(r"<!--tauceti-meta:v1 (.*?)-->", re.S)
+REPLY_MARKER_RE = re.compile(r"<!--epsiloneridani-reply:([a-z][a-z-]*):through:(\d+)-->")
+RUBRIC_MARKER_RE = re.compile(r"<!--epsiloneridani-rubric:([a-z][a-z-]*)-->")
+META_RE = re.compile(r"<!--epsiloneridani-meta:v1 (.*?)-->", re.S)
 
 
 def atomic_write_json(path, value):
@@ -205,8 +205,8 @@ def gh_api(method, endpoint, fields=None, body_file=None, failures=None, action=
         return {}
 
 
-SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
-REVIEW_BOT = "tauceti-review-bot[bot]"
+SCOREBOARD_MARKER = "<!--epsiloneridani-scoreboard-->"
+REVIEW_BOT = "epsiloneridani-review-bot[bot]"
 
 
 def current_login():
@@ -334,7 +334,7 @@ def archive_outcome(archive_dir, repo, pr, plan, sb_id, scoreboard_ok, posted_th
     if not archive_dir:
         return
     sb_body = pathlib.Path(plan["scoreboard_body"]).read_text()
-    rec = {"schema": "tauceti.post/v1", "repo": repo, "pr": int(pr),
+    rec = {"schema": "epsiloneridani.post/v1", "repo": repo, "pr": int(pr),
            "round": plan.get("round"), "head_sha": plan.get("head_sha") or None,
            "posted_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
            "scoreboard_comment_id": sb_id if scoreboard_ok else None,

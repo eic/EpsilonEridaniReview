@@ -28,12 +28,12 @@ see [`rubrics/README.md`](rubrics/README.md) for the list and which angles can b
 EpsilonEridani has a metered-API CI review workflow, but production review generation is currently
 disabled there to conserve that budget. Reviews instead come from the trusted operator-run worker
 and from ad hoc command-line runs. A trusted contributor can run the same engine on their **own
-Claude / Codex / Kiro subscription** with the `tauceti-review` CLI — no API bill. See
+Claude / Codex / Kiro subscription** with the `epsiloneridani-review` CLI — no API bill. See
 [REVIEWING.md](REVIEWING.md):
 
 ```bash
-uvx --from git+https://github.com/TauCetiProject/TauCetiReview tauceti-review 42
-uvx --from git+https://github.com/TauCetiProject/TauCetiReview tauceti-review 42 \
+uvx --from git+https://github.com/TauCetiProject/TauCetiReview epsiloneridani-review 42
+uvx --from git+https://github.com/TauCetiProject/TauCetiReview epsiloneridani-review 42 \
   --reviewer kiro --kiro-model gpt-5.6-sol
 ```
 
@@ -60,7 +60,7 @@ decisions and preliminary calibration. All of it lives in
 
 ## Costs
 
-`tauceti-review-costs` reports the engine's review spend — tokens and imputed
+`epsiloneridani-review-costs` reports the engine's review spend — tokens and imputed
 dollars, per merged line of code, per day, and split by PR outcome — reading the
 durable [TauCetiData](https://github.com/TauCetiProject/TauCetiData) archive
 (reproducible by anyone) or the local store. Costs are recomputed from token
@@ -69,8 +69,8 @@ counts at the rate in effect on each run's date. See [runner/COSTS.md](runner/CO
 ## Status
 
 - `rubrics/` — the per-angle prompts (live).
-- `runner/` — the review engine (`review.py` + `post.py`) and the `tauceti-review` CLI (live).
-- `runner/costs.py` — the `tauceti-review-costs` analytics CLI (live).
+- `runner/` — the review engine (`review.py` + `post.py`) and the `epsiloneridani-review` CLI (live).
+- `runner/costs.py` — the `epsiloneridani-review-costs` analytics CLI (live).
 - `runner/prices.json` — model rates; every dispatchable model must be priced (CI-enforced in `tests/`, and the engine fails fast on an unpriced model). Each archived run is stamped with a `prices_sha` so its cost is auditable.
 - The GitHub Actions workflows — reusable review and merge helpers plus `tests` (price coverage) —
   live. EpsilonEridani's caller currently disables metered review generation, as described above.

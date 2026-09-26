@@ -237,8 +237,8 @@ def sync(outbox, data_dir, remote="", retries=5):
         if not _git(["status", "--porcelain"], data_dir).stdout.strip():
             _drain(outbox, copied)  # everything already upstream
             return 0
-        _git(["-c", "user.name=tauceti-archive", "-c",
-              "user.email=tauceti-archive@users.noreply.github.com",
+        _git(["-c", "user.name=epsiloneridani-archive", "-c",
+              "user.email=epsiloneridani-archive@users.noreply.github.com",
               "commit", "-q", "-m", f"archive: {len(copied)} file(s) from outbox"], data_dir)
         push = _git(["push", "-q", "origin", "HEAD:main"], data_dir, check=False)
         if push.returncode == 0:

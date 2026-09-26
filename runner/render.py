@@ -1,4 +1,4 @@
-"""tauceti-review render — split from review.py (behaviour-preserving).
+"""epsiloneridani-review render — split from review.py (behaviour-preserving).
 
 Run as a script (runner/ on sys.path), so imports are flat siblings, not package-relative."""
 
@@ -34,7 +34,7 @@ def rubrics_fingerprint(rubrics_dir):
 
 def sanitize(text, limit=2000):
     """Model-derived text rendered into a comment body is untrusted: strip HTML comments so a
-    prompt-injected reviewer cannot forge a `tauceti-meta`/`tauceti-rubric` marker, drop control
+    prompt-injected reviewer cannot forge a `epsiloneridani-meta`/`epsiloneridani-rubric` marker, drop control
     characters, and cap the length. Applied at render time only — stored records keep the raw
     text."""
     if not text:
@@ -51,7 +51,7 @@ def meta_block(kind, **payload):
     namespace); a scraper trusts the block only on the final line of a bot-authored comment."""
     obj = {"kind": kind}
     obj.update((k, v) for k, v in payload.items() if v not in (None, "", []))
-    return "<!--tauceti-meta:v1 " + json.dumps(obj, separators=(",", ":"), sort_keys=True) + "-->"
+    return "<!--epsiloneridani-meta:v1 " + json.dumps(obj, separators=(",", ":"), sort_keys=True) + "-->"
 
 
 
@@ -97,7 +97,7 @@ def render_thread(cf, prov=None):
     rubric (Stage 2); the meta block at the end carries machine-readable provenance."""
     emoji = {"block": "⛔", "request_changes": "🟡", "error": "⚠️"}
     v = cf.get("verdict", "error")
-    lines = [f"<!--tauceti-rubric:{cf['rubric']}-->",
+    lines = [f"<!--epsiloneridani-rubric:{cf['rubric']}-->",
              f"### {emoji.get(v, '•')} {cf['rubric']} — {v}  "
              f"`{cf.get('provider')}/{cf.get('model')}`", "", sanitize(cf.get("summary", "")), ""]
     for f in (cf.get("findings") or []):
@@ -126,7 +126,7 @@ def render_thread(cf, prov=None):
 
 def render_contest_reply(cf, head_sha, prov=None, answered_id=None):
     """A direct in-thread reply answering the author's contest: whether their reply cleared the
-    finding, else the one-line reason it stands. The hidden `tauceti-reply:RUBRIC:through:<id>`
+    finding, else the one-line reason it stands. The hidden `epsiloneridani-reply:RUBRIC:through:<id>`
     marker carries the newest reply id answered THROUGH, so the post step never answers the same
     contest twice (and a later reply, with a higher id, is answered as a fresh contest)."""
     rubric = cf.get("rubric", "")
@@ -137,7 +137,7 @@ def render_contest_reply(cf, head_sha, prov=None, answered_id=None):
     else:
         why = sanitize((cf.get("summary") or "").replace("\n", " ")) or "the prior finding still holds"
         verdict = f"the finding stands — {why}"
-    return (f"<!--tauceti-reply:{rubric}:through:{aid}-->\n"
+    return (f"<!--epsiloneridani-reply:{rubric}:through:{aid}-->\n"
             f"**Re: your reply on `{rubric}` —** re-reviewed on `{head_sha[:7]}`; {verdict}\n\n"
             f"<sub>`{judge}` · addresses your replies through comment {aid}.</sub>")
 
@@ -158,7 +158,7 @@ def render_scoreboard(candidates, state_map, head_sha, overall, budget_note, cos
     word = {"green": "approved", "stale": "stale (re-run pending)",
             "blocking_request": "changes requested", "blocking_block": "blocked",
             "error": "error", "absent": "not yet run"}
-    lines = ["<!--tauceti-scoreboard-->", f"## AI review — {overall}", "",
+    lines = ["<!--epsiloneridani-scoreboard-->", f"## AI review — {overall}", "",
              "Each rubric is judged independently by multiple review agents; the PR merges only once "
              "**every** rubric is green — any rubric that is not green (changes requested, blocked, "
              f"errored, stale, or not yet run) blocks the merge. See the [rubrics]({rubric_url(prov)}).", "",

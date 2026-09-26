@@ -93,7 +93,7 @@ different provider/model seed as a cheap arbiter (continuity without conversatio
   budget/round note.
 - **Detail threads** (blocking only): one **PR review comment** per blocking rubric, anchored
   at its top finding's `file:line` (file-level fallback for line-0 / PR-wide findings; default
-  to the first changed file). Body carries the findings and a hidden `<!--tauceti-rubric:NAME-->`
+  to the first changed file). Body carries the findings and a hidden `<!--epsiloneridani-rubric:NAME-->`
   marker so a reply can be mapped back to the rubric. Re-runs **edit the thread root in place**;
   author replies accumulate beneath it.
 - **On flip to green**: resolve the thread (GraphQL `resolveReviewThread`) and update the

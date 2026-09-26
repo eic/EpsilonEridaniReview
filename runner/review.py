@@ -156,7 +156,7 @@ def abort_provider_down(ctx):
         file=sys.stderr,
     )
     # Last line, and phrased in the operative terms, because a driving worker classifies a failed
-    # review from the last non-empty line of this log (TauCetiWorker's review_diagnostics).
+    # review from the last non-empty line of this log (EpsilonEridaniWorker's review_diagnostics).
     print(
         f"review aborted: {_PROVIDER_DOWN_PHRASE[kind]} "
         f"(every configured provider — {', '.join(sorted(ctx.providers))} — failed "
@@ -195,7 +195,7 @@ def emit_round_archive(a, prov, head, ran, run_results, states, overall, halted,
     # production clash is caught losslessly by the archive's collision backstop (archive.write_record).
     disc = ("-" + hashlib.sha256("|".join(sorted(run_ids)).encode()).hexdigest()[:12]
             if suffix and run_ids else "")
-    rrec = {"schema": "tauceti.round/v1", "round_id": f"{a.pr}-{round_num}{suffix}{disc}",
+    rrec = {"schema": "epsiloneridani.round/v1", "round_id": f"{a.pr}-{round_num}{suffix}{disc}",
             "repo": a.repo, "pr": int(a.pr), "round": round_num,
             "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "mode": mode or a.mode, "arm": a.arm,
@@ -265,7 +265,7 @@ def render_thread_plan(candidates, ran, state_map, head, prov, paths, threads_di
                  "comment_id": (thread or {}).get("comment_id"),
                  "path": pick_anchor(cf, fallback_path, set(paths_sorted))})
         elif not repairs_only and s in ("green", "stale") and thread:
-            bpath.write_text(f"<!--tauceti-rubric:{rubric}-->\n### ✅ {rubric} — now passing on "
+            bpath.write_text(f"<!--epsiloneridani-rubric:{rubric}-->\n### ✅ {rubric} — now passing on "
                              f"`{head[:7]}`.\n\n"
                              + meta_block("thread", rubric=rubric, **thread_meta(cf, prov)))
             actions.append(
@@ -466,7 +466,7 @@ def run_rubric(ctx, rubric):
     if a.archive_dir and not a.dry_run:
         vo = res.get("verdict_obj") or {}
         rec = {
-            "schema": "tauceti.run/v1", "run_id": res["run_id"],
+            "schema": "epsiloneridani.run/v1", "run_id": res["run_id"],
             "dedupe_key": "|".join([a.repo, str(a.pr), head, rubric, model,
                                     rubrics_version, a.arm, str(round_num)]),
             "source": "live" if a.arm == "production" else "shadow", "arm": a.arm,

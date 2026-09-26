@@ -1,4 +1,4 @@
-"""tauceti-review ledger — the on-disk review state (ledger.json).
+"""epsiloneridani-review ledger — the on-disk review state (ledger.json).
 
 Run as a script (runner/ on sys.path), so imports are flat siblings, not package-relative.
 

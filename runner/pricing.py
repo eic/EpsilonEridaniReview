@@ -1,4 +1,4 @@
-"""tauceti-review pricing — split from review.py (behaviour-preserving).
+"""epsiloneridani-review pricing — split from review.py (behaviour-preserving).
 
 Run as a script (runner/ on sys.path), so imports are flat siblings, not package-relative."""
 
@@ -40,7 +40,7 @@ OPENROUTER_MODELS = {
 
 # Model pricing is loaded from prices.json (the single source of truth — edit there, never here).
 # It is a DATED table: each model maps to a list of rate windows. The engine bills at the *newest*
-# window per model; the analysis (tauceti-review-costs) prices each past run at the window covering
+# window per model; the analysis (epsiloneridani-review-costs) prices each past run at the window covering
 # its run date. review.py runs from the engine checkout, so the file always sits beside it. The
 # daily budget and every archived run's cost_usd derive from these rates.
 PRICES_PATH = pathlib.Path(__file__).resolve().parent / "prices.json"
@@ -48,7 +48,7 @@ PRICES_PATH = pathlib.Path(__file__).resolve().parent / "prices.json"
 
 def load_price_windows():
     """The dated price table {model: [window, ...]} straight from prices.json. Shared by the engine
-    (newest window per model) and the cost analytics (tauceti-review-costs, dated per run)."""
+    (newest window per model) and the cost analytics (epsiloneridani-review-costs, dated per run)."""
     return json.loads(PRICES_PATH.read_text()).get("models", {})
 
 

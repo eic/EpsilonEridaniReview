@@ -50,7 +50,7 @@ def _install_stubs():
 
 
 def _workspace(rubrics):
-    d = pathlib.Path(tempfile.mkdtemp(prefix="tauceti-billing-"))
+    d = pathlib.Path(tempfile.mkdtemp(prefix="epsiloneridani-billing-"))
     rd = d / "rubrics"; rd.mkdir()
     (rd / "_common.md").write_text("common rubric preamble\n")
     for r in rubrics:

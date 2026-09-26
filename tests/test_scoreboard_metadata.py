@@ -10,7 +10,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "runner"
 import render  # noqa: E402
 
 
-META_RE = re.compile(r"<!--tauceti-meta:v1 (.*?)-->", re.S)
+META_RE = re.compile(r"<!--epsiloneridani-meta:v1 (.*?)-->", re.S)
 
 
 def scoreboard_meta(submitted_by):

@@ -61,7 +61,7 @@ so safety rests entirely on breaking links 1–2: removing the reviewer's *acces
 
 ## Auto-merge gate (I9)
 
-Merging is performed by the `tauceti-review-bot` GitHub App, which is a **review-bypass actor**
+Merging is performed by the `epsiloneridani-review-bot` GitHub App, which is a **review-bypass actor**
 on `main` (no machine user account is used; a GitHub App cannot be a CODEOWNER). A PR is merged
 only when **all** of:
 

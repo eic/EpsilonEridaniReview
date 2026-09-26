@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: tauceti-shadow
+  group: epsiloneridani-shadow
   cancel-in-progress: false
 
 jobs:
@@ -165,7 +165,7 @@ jobs:
         if: always()
         env: { TOKEN: "${{ steps.archive_token.outputs.token }}" }
         run: |
-          python3 runner/archive.py sync --store store --data-dir "$RUNNER_TEMP/tauceti-data" \
+          python3 runner/archive.py sync --store store --data-dir "$RUNNER_TEMP/epsiloneridani-data" \
             --remote "https://x-access-token:${TOKEN}@github.com/TauCetiProject/TauCetiData"
 
       - name: Keep outbox as an artifact if the sync failed
