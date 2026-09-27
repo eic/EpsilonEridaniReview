@@ -171,7 +171,7 @@ jobs:
       - name: Keep outbox as an artifact if the sync failed
         # The scratch store dies with the runner; a failed sync must not lose the arm's records.
         if: always() && steps.sync.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: shadow-outbox-pr${{ inputs.pr }}-${{ inputs.label }}
           path: store/outbox
