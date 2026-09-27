@@ -113,7 +113,7 @@ jobs:
       - name: Mint comment token (early, for the in-progress scoreboard)
         id: early_comment_token
         continue-on-error: true
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1; v1 ignores permission-* inputs
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.2.1; v1 ignores permission-* inputs
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -217,7 +217,7 @@ jobs:
       - name: Mint comment token (EpsilonEridani pull-requests + issues:write)
         id: comment_token
         if: always()
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1; v1 ignores permission-* inputs
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.2.1; v1 ignores permission-* inputs
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -276,7 +276,7 @@ jobs:
         id: archive_token
         if: always()
         continue-on-error: true
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1; v1 ignores permission-* inputs
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.2.1; v1 ignores permission-* inputs
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -299,7 +299,7 @@ jobs:
       - name: Mint store token (EpsilonEridaniReview contents:write)
         id: store_token
         if: always()
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1; v1 ignores permission-* inputs
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.2.1; v1 ignores permission-* inputs
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -323,7 +323,7 @@ jobs:
       - name: Mint merge token (EpsilonEridani contents + pull-requests write)
         id: merge_token
         if: ${{ inputs.enable_automerge }}
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1; v1 ignores permission-* inputs
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.2.1; v1 ignores permission-* inputs
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
