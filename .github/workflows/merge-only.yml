@@ -19,7 +19,7 @@ on:
     secrets:
       # Only the App credentials the merge needs — the caller passes these explicitly rather than
       # inheriting all of EpsilonEridani's secrets into this public-triggerable path.
-      APP_ID: { required: true }
+      APP_CLIENT_ID: { required: true }
       APP_PRIVATE_KEY: { required: true }
 
 permissions:
@@ -119,7 +119,7 @@ jobs:
         id: merge_token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.2.1; v1 ignores permission-* inputs
         with:
-          client-id: ${{ secrets.APP_ID }}
+          client-id: ${{ secrets.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: eic
           repositories: EpsilonEridani
