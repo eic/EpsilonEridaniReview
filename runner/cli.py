@@ -43,7 +43,7 @@ PROVIDER_DOWN_EXIT = 3
 
 REVIEW_REPO = "eic/EpsilonEridaniReview"
 DEFAULT_CODE_REPO = "eic/EpsilonEridani"
-DEFAULT_ROADMAP_REPO = "eic/EpsilonEridaniRoadmap"
+DEFAULT_ROADMAP_REPO = "eic/EpsilonEridaniRoadmaps"
 CACHE_DIR = pathlib.Path(
     os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))) / "epsiloneridani-review"
 

@@ -3,7 +3,7 @@
 The review rubrics and the machinery that runs review for
 [EpsilonEridani](https://github.com/eic/EpsilonEridani), an AIs-welcome Lean 4 library
 downstream of Mathlib. Humans own these rubrics; AIs author the code; the human roadmaps
-live in [EpsilonEridaniRoadmap](https://github.com/eic/EpsilonEridaniRoadmap).
+live in [EpsilonEridaniRoadmap](https://github.com/eic/EpsilonEridaniRoadmaps).
 
 EpsilonEridani is being incubated by the [Lean FRO](https://lean-lang.org/fro/) in partnership with academic and
 industry groups.

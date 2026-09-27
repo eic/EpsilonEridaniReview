@@ -42,7 +42,7 @@ jobs:
       - name: Checkout roadmap (public)
         uses: actions/checkout@v4
         with:
-          repository: eic/EpsilonEridaniRoadmap
+          repository: eic/EpsilonEridaniRoadmaps
           path: roadmap
           persist-credentials: false
 
