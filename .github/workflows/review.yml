@@ -32,7 +32,7 @@ jobs:
     steps:
       # ---- Untrusted-input phase: NO tokens, NO provider keys reachable by PR code ----
       - name: Checkout review repo (runner + rubrics)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: eic/EpsilonEridaniReview
           # main in production (workflow_call); a dispatch can point at a branch to test changes.
@@ -40,7 +40,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout roadmap (public)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: eic/EpsilonEridaniRoadmaps
           path: roadmap
@@ -134,7 +134,7 @@ jobs:
             --plan "$PWD/post_plan.json" --store store
 
       - name: Checkout code at PR head (public, no credentials persisted)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: eic/EpsilonEridani
           ref: ${{ env.HEAD_SHA }}

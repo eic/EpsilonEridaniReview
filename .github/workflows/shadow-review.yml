@@ -34,7 +34,7 @@ jobs:
     steps:
       # ---- Untrusted-input phase: NO tokens, NO provider keys reachable by PR code ----
       - name: Checkout review repo (runner + rubrics, pinned)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: eic/EpsilonEridaniReview
           ref: ${{ inputs.rubrics_sha }}
@@ -43,7 +43,7 @@ jobs:
       # The diff helper comes from THIS workflow's own commit, not the pinned engine: every arm must
       # see the diff the production paths compute, however old the engine under test is.
       - name: Checkout the diff helper (this workflow's commit)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: eic/EpsilonEridaniReview
           ref: ${{ github.sha }}
@@ -53,7 +53,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout roadmap (public)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: eic/EpsilonEridaniRoadmaps
           path: roadmap
@@ -86,7 +86,7 @@ jobs:
             --jq '"# " + .title + "\n\n" + (.body // "")' > pr_desc.txt
 
       - name: Checkout code at PR head (public, no credentials persisted)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: eic/EpsilonEridani
           ref: ${{ env.HEAD_SHA }}

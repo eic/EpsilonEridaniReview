@@ -38,7 +38,7 @@ jobs:
       # No provider keys, no reviewer step — nothing here runs PR-influenced code, so the
       # security posture is simpler than review.yml: only trusted GitHub-derived inputs.
       - name: Checkout review repo (runner + rubrics)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: eic/EpsilonEridaniReview
           ref: ${{ inputs.review_ref }}
