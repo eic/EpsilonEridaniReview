@@ -17,6 +17,8 @@
                                   "long_context": {"threshold": 272000, "input": 2.0,  "output": 9.0,  "cache_read": 0.2}}],
     "deepseek/deepseek-v4-pro": [{"effective": "2026-01-01", "input": 0.435, "output": 0.87, "cache_read": 0.004}],
     "minimax/minimax-m3":       [{"effective": "2026-01-01", "input": 0.30, "output": 1.20, "cache_read": 0.30}],
-    "x-ai/grok-4.3":            [{"effective": "2026-01-01", "input": 1.25, "output": 2.50, "cache_read": 1.25}]
+    "x-ai/grok-4.3":            [{"effective": "2026-01-01", "input": 1.25, "output": 2.50, "cache_read": 1.25}],
+    "gemini-3.1-pro":           [{"effective": "2026-01-01", "input": 1.25, "output": 5.0,  "cache_read": 0.3125}],
+    "gemini-3.1-flash":         [{"effective": "2026-01-01", "input": 0.075,"output": 0.30, "cache_read": 0.01875}]
   }
 }

@@ -455,6 +455,9 @@ def main():
                     help="exact direct-Claude model; overrides TAUCETI_CLAUDE_MODEL. "
                          "Unset: keep the selected engine's default. Model must be priced in "
                          "runner/prices.json (e.g. claude-fable-5-1)")
+    ap.add_argument("--agy-model", default=os.environ.get("TAUCETI_AGY_MODEL") or None,
+                    help="exact agy model; overrides TAUCETI_AGY_MODEL. "
+                         "Unset: keep the selected engine's default.")
     ap.add_argument("--kiro-model", default="gpt-5.6-sol",
                     help="exact Kiro model (default: gpt-5.6-sol; e.g. claude-opus-5)")
     ap.add_argument("--no-mathlib", action="store_true",
@@ -570,9 +573,17 @@ def main():
     want = [p.strip() for p in a.reviewer.split(",") if p.strip()] if a.reviewer else []
     if a.auth == "subscription":
         avail = [p for p in ("claude", "codex") if shutil.which(p)]
+        if shutil.which("agy"):
+            avail.append("gemini")
+            if "agy" in want:
+                avail.append("agy")
     else:  # api: draw only from providers whose key is in the environment
         avail = [p for p, k in (("claude", "ANTHROPIC_API_KEY"), ("codex", "OPENAI_API_KEY"))
                  if os.environ.get(k)]
+        if shutil.which("agy") and os.environ.get("GEMINI_API_KEY"):
+            avail.append("gemini")
+            if "agy" in want:
+                avail.append("agy")
     # sonnet is a cheaper claude-family A/B arm: same `claude` binary / ANTHROPIC_API_KEY as
     # claude, but explicit-only (never auto-drawn) so default reviews stay on Opus.
     claude_ok = shutil.which("claude") if a.auth == "subscription" else os.environ.get("ANTHROPIC_API_KEY")
@@ -761,6 +772,8 @@ def main():
            "--replies-json", str(replies_path)]
     if a.claude_model:
         cmd += ["--claude-model", a.claude_model]
+    if a.agy_model:
+        cmd += ["--agy-model", a.agy_model]
     if a.rubrics:
         cmd += ["--rubrics", a.rubrics]
     print("\n=== running review (this calls claude/codex per rubric; takes a few minutes) ===\n",

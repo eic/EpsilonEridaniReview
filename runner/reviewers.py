@@ -186,6 +186,13 @@ def reviewer_env(provider, keys, subscription=False):
         # reviewer has nothing else to leak, and a read-only tool set (PI_TOOLS, no bash) means
         # it has no shell to leak it with. Residual matches the others: it can read its own key.
         env["OPENROUTER_API_KEY"] = keys.get("openrouter", "")
+    elif provider in ("gemini", "agy"):
+        # agy CLI auth.
+        if not subscription:
+            env["AGY_HOME"] = os.path.join(home, ".gemini", "antigravity-cli")
+            env["GEMINI_API_KEY"] = keys.get("gemini", "")
+        else:
+            env["HOME"] = os.path.expanduser("~") # fallback to host HOME to inherit login
     else:
         codex_home = os.path.join(home, ".codex")
         os.makedirs(codex_home, exist_ok=True)  # codex requires CODEX_HOME to already exist
@@ -418,6 +425,7 @@ def run_claude(prompt, cwd, model, env):
            cwd=cwd, env=env, stdin_text=prompt)
     out = {"returncode": r.returncode, "raw_stderr": r.stderr[-3000:]}
     trace, meta = [], {}
+
     try:
         # Keep the external stream parse inside this boundary so an unforeseen event shape becomes
         # a diagnosable failed attempt rather than unwinding the whole review round.
@@ -675,4 +683,52 @@ def run_pi(prompt, cwd, model, env):
     # an empty text or a captured errorMessage is the real failure signal — keep it diagnosable).
     if r.returncode != 0 or not text:
         out.update(raw_stdout=r.stdout[-3000:], error_message=err)
+    return out
+
+def run_agy(prompt, cwd, model, env):
+    # Drive the Antigravity CLI (agy) as a reviewer, read-only.
+    cmd = ["agy", "--input-format", "text", "--output-format", "stream-json", "--model", model,
+           "--effort", "low", "--disable-slash-commands", "--sandbox", 
+           "--dangerously-skip-permissions"]
+    r = sh(cmd, cwd=cwd, env=env, stdin_text=prompt)
+    out = {"returncode": r.returncode, "raw_stderr": r.stderr[-3000:]}
+
+    text, usage, session_id, err = "", None, None, ""
+    
+    for line in r.stdout.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            ev = json.loads(line)
+        except Exception:
+            continue
+            
+        if ev.get("event") == "result":
+            d = ev.get("result") or {}
+            text = d.get("response", "")
+            usage = d.get("usage")
+            session_id = d.get("conversation_id")
+            if d.get("status") == "ERROR":
+                err = d.get("error")
+                out["is_error"] = True
+
+    pin, pout = PRICES.get(model, DEFAULT_PRICE)
+    if usage:
+        inp = usage.get("input_tokens", 0)
+        cached = usage.get("cache_read_tokens", 0)
+        out_tok = usage.get("output_tokens", 0)
+        computed = (max(0, inp - cached) * pin + cached * CACHE_READ.get(model, pin) + out_tok * pout) / 1e6
+        out["cost_usd"] = round(computed, 6)
+        out["cost_estimated"] = True
+        
+    out.update(text=text, usage=usage, session_id=session_id)
+    if err:
+        out["error_message"] = err
+
+    if r.returncode != 0 or not text:
+        out.update(raw_stdout=r.stdout[-3000:])
+        if err and not out.get("error_message"):
+            out["error_message"] = err
+            
     return out

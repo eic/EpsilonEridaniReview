@@ -410,6 +410,8 @@ def _agent_of(name: str) -> str:
         return "codex"
     if "claude" in n or "opus" in n or "sonnet" in n:
         return "claude"
+    if "gemini" in n or "agy" in n or "antigravity" in n:
+        return "gemini"
     if "kim" in n or "morrison" in n:
         return "human"
     return "other"
@@ -421,6 +423,8 @@ def _authoring_agent(data: dict) -> tuple[str, str]:
         agent = "codex"
     elif re.search(r"Claude Code|Prepared with Claude|with Claude\b|Opus", body, re.I):
         agent = "claude"
+    elif re.search(r"Gemini|Antigravity|\bagy\b", body, re.I):
+        agent = "gemini"
     else:
         agent = None
     name = ""

@@ -15,13 +15,13 @@ import archive
 from dataclasses import dataclass, field
 
 from ledger import Ledger
-from pricing import CLAUDE_MODEL, CODEX_FALLBACK_MODEL, CODEX_MODEL, KIRO_MODEL, OPENROUTER_MODELS, PRICES_SHA, SONNET_MODEL, require_priced, sum_usage
+from pricing import CLAUDE_MODEL, CODEX_FALLBACK_MODEL, CODEX_MODEL, KIRO_MODEL, OPENROUTER_MODELS, PRICES_SHA, SONNET_MODEL, AGY_MODEL, require_priced, sum_usage
 # Re-exported for merge_from_scoreboard (changed_paths/decide_merge/DEFAULT_RUBRICS) and the price
 # tests, which read these as review.X — kept importable here though review.py no longer uses them.
 from pricing import PRICES, _PRICE_WINDOWS, dispatch_models  # noqa: F401
 from verdict import extract_verdict, has_new_contest, is_blocking, is_unresolved, newest_reply_id, overall_label, posts_review_thread, state_of, today
 from merge import changed_paths, decide_merge, read_paths
-from reviewers import build_prompt, ci_status_block, cleanup_rev_home, codex_model_unavailable, exact_kiro_model, reject_retired_opus, reviewer_env, run_claude, run_codex, run_kiro, run_pi, sweep_rev_homes
+from reviewers import build_prompt, ci_status_block, cleanup_rev_home, codex_model_unavailable, exact_kiro_model, reject_retired_opus, reviewer_env, run_claude, run_codex, run_kiro, run_pi, run_agy, sweep_rev_homes
 from casefile import build_reactivation_block, carry_forward, normalize_finding_path, patch_digest, pick_anchor, update_case_file
 from render import meta_block, render_contest_reply, render_scoreboard, render_thread, rubrics_fingerprint, thread_meta
 
@@ -668,6 +668,8 @@ def main():
                          "for a separate step that reconciles the review-budget-spent label")
     ap.add_argument("--claude-model", default=CLAUDE_MODEL,
                     help=f"exact direct-Claude reviewer model (default: {CLAUDE_MODEL}); Opus 4.8 is retired")
+    ap.add_argument("--agy-model", default=AGY_MODEL,
+                    help=f"exact agy reviewer model (default: {AGY_MODEL})")
     ap.add_argument("--codex-model", default=None,
                     help=f"codex reviewer model (default: {CODEX_MODEL}). Passing this explicitly also "
                          "opts OUT of the automatic unavailable-model fallback — the pinned model is "
@@ -739,11 +741,11 @@ def main():
 
     subscription = a.auth == "subscription"
     if subscription:  # no keys: reviewers use the runner's logged-in claude/codex subscription
-        keys = {"anthropic": "", "openai": "", "kiro": (os.environ.get("KIRO_API_KEY", "") or "").strip()}
+        keys = {"anthropic": "", "openai": "", "kiro": (os.environ.get("KIRO_API_KEY", "") or "").strip(), "gemini": ""}
     elif a.keys_dir:
         kd = pathlib.Path(a.keys_dir)
         keys = {}
-        for name in ("anthropic", "openai", "kiro", "openrouter"):
+        for name in ("anthropic", "openai", "kiro", "openrouter", "gemini"):
             f = kd / name
             keys[name] = f.read_text().strip() if f.exists() else ""
             # Read into memory then remove from disk: no key should sit on a filesystem a
@@ -753,6 +755,7 @@ def main():
     else:  # local/dev fallback: read from this process's env
         keys = {"anthropic": os.environ.get("ANTHROPIC_API_KEY", ""),
                 "openai": os.environ.get("OPENAI_API_KEY", ""),
+                "gemini": os.environ.get("GEMINI_API_KEY", ""),
                 "kiro": (os.environ.get("KIRO_API_KEY", "") or "").strip()}
 
     # OpenRouter (the pi reviewers) has no subscription/OAuth path — its credential is always an
@@ -979,6 +982,8 @@ def main():
     outdir.mkdir(parents=True, exist_ok=True)
     runners = {"claude": (run_claude, a.claude_model), "codex": (run_codex, a.codex_model or CODEX_MODEL),
                "kiro": (run_kiro, a.kiro_model),
+               "gemini": (run_agy, getattr(a, "agy_model", AGY_MODEL)),
+               "agy": (run_agy, getattr(a, "agy_model", AGY_MODEL)),
                # sonnet is the same claude CLI runner pinned to Sonnet — a cheaper claude-family
                # A/B arm, selected explicitly (never auto-drawn) via --reviewer sonnet.
                "sonnet": (run_claude, SONNET_MODEL)}

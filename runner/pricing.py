@@ -19,6 +19,8 @@ CODEX_FALLBACK_MODEL = "gpt-5.6-terra"
 # entitled Kiro model with --kiro-model.
 KIRO_MODEL = "gpt-5.6-sol"
 
+AGY_MODEL = "gemini-3.1-pro"
+
 # OpenRouter models driven through the `pi` agent (badlogic/pi-mono): a third reviewer
 # family alongside claude/codex, selectable as --providers/--reviewer deepseek|minimax.
 # Pay-per-token, so they run only when explicitly named — never auto-drawn. Add a row here
@@ -87,6 +89,7 @@ def dispatch_models(claude_model=CLAUDE_MODEL, codex_model=CODEX_MODEL):
         codex_model,
         CODEX_FALLBACK_MODEL,
         SONNET_MODEL,
+        AGY_MODEL,
         *OPENROUTER_MODELS.values(),
     }
 
