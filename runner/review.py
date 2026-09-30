@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tau Ceti review runner.
+"""Epsilon Eridani review runner.
 
 Reviews a PR with agentic CLIs (claude / codex, random per rubric, read-only), posts an
 aggregated verdict, and records spend. State lives in a `--store` directory (a checkout of
@@ -371,7 +371,7 @@ def run_rubric(ctx, rubric):
     run_results = ctx.run_results
     spent_today = ctx.spent_today
     cf_prev = state_map.get(rubric)
-    marker = "TAUCETI-VERDICT-" + secrets.token_hex(12)  # one-time, unforgeable channel
+    marker = "EPSILONERIDANI-VERDICT-" + secrets.token_hex(12)  # one-time, unforgeable channel
     is_reply = (a.mode == "reply" and rubric == a.reply_rubric)
     reblock = build_reactivation_block(cf_prev, reply_text if is_reply else None)
     prompt = build_prompt(pathlib.Path(a.rubrics_dir), rubric, base_context + reblock, marker)

@@ -63,7 +63,7 @@ def result_for(tid, *, is_error=False, content="file contents here"):
 
 
 RESULT = {"type": "result", "subtype": "success", "is_error": False,
-          "result": "TAUCETI-VERDICT-abc\n{\"verdict\": \"approve\"}",
+          "result": "EPSILONERIDANI-VERDICT-abc\n{\"verdict\": \"approve\"}",
           "total_cost_usd": 1.25, "usage": {"input_tokens": 7}, "session_id": "s-1"}
 
 
@@ -132,7 +132,7 @@ def main():
         out = run(["warming up", use("a", "Glob", pattern="**/*.lean"), "{ not json", RESULT], ws)
         for k, v in (("cost_usd", 1.25), ("session_id", "s-1"), ("is_error", False)):
             check(f"{k} still arrives from the terminal event", out.get(k) == v)
-        check("the verdict text still arrives", out["text"].startswith("TAUCETI-VERDICT-"))
+        check("the verdict text still arrives", out["text"].startswith("EPSILONERIDANI-VERDICT-"))
         check("a malformed line is counted", out["tool_trace_meta"].get("malformed_events") == 1)
         check("a Glob with no path records the tool alone", out["tool_trace"][0] == {"tool": "Glob"})
 
@@ -147,7 +147,7 @@ def main():
                    use("b", "Bash", command="echo hi"), denied,
                    result_for("b", is_error=True, content="denied"), RESULT], ws)
         check("a denial announcement does not end the round", not out.get("parse_error"))
-        check("the verdict still arrives past it", out["text"].startswith("TAUCETI-VERDICT-"))
+        check("the verdict still arrives past it", out["text"].startswith("EPSILONERIDANI-VERDICT-"))
         check("the announcement is not itself a tool call",
               [e["tool"] for e in out["tool_trace"]] == ["Read", "Bash"])
         check("the denied request still reads as denied", out["tool_trace"][1]["ok"] is False)
@@ -171,7 +171,7 @@ def main():
         check("...and the round still gets a result object back", out.get("text") == "")
 
     # --- 4) a CLI-reported failure is not a verdict ---
-    marker = "TAUCETI-VERDICT-abc"
+    marker = "EPSILONERIDANI-VERDICT-abc"
     errored = {"returncode": 0, "is_error": True,
                "text": marker + '\n{"verdict": "approve"}'}
     check("is_error is a failure signal", review._cli_reports_failure(errored))

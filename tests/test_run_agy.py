@@ -36,7 +36,7 @@ def test_agy_parsing():
             "result": {
                 "conversation_id": "sid-123",
                 "status": "SUCCESS",
-                "response": "TAUCETI-VERDICT-abc\n{\"verdict\": \"approve\"}",
+                "response": "EPSILONERIDANI-VERDICT-abc\n{\"verdict\": \"approve\"}",
                 "usage": {
                     "input_tokens": 100,
                     "cache_read_tokens": 50,
@@ -48,7 +48,7 @@ def test_agy_parsing():
         out = run([ev_success], ws)
         check("cost_estimated is True", out.get("cost_estimated") is True)
         check("session_id is extracted", out.get("session_id") == "sid-123")
-        check("text is extracted", "TAUCETI-VERDICT-abc" in out.get("text", ""))
+        check("text is extracted", "EPSILONERIDANI-VERDICT-abc" in out.get("text", ""))
         check("is_error is not set for success", not out.get("is_error"))
         check("returncode is propagated", out.get("returncode") == 0)
 

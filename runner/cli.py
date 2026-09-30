@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""`epsiloneridani-review` — run the Tau Ceti AI review on a PR with your own subscription.
+"""`epsiloneridani-review` — run the Epsilon Eridani AI review on a PR with your own subscription.
 
 This is the user-facing front end to the same review engine CI runs (`runner/review.py` +
 `runner/post.py`). Where CI bills the Anthropic / OpenAI APIs, this drives the locally
@@ -59,7 +59,7 @@ CACHE_DIR = pathlib.Path(
 # so honoring anyone's marker is what lets a fleet of non-collaborators coordinate at all.
 COORD_MARKER = "epsiloneridani-review-in-progress"
 COORD_RE = re.compile(r"<!--epsiloneridani-review-in-progress (.*?)-->", re.S)
-COORD_TTL = int(os.environ.get("TAUCETI_REVIEW_INPROGRESS_TTL", "1800"))  # 30 min; > a slow review
+COORD_TTL = int(os.environ.get("EPSILONERIDANI_REVIEW_INPROGRESS_TTL", "1800"))  # 30 min; > a slow review
 COORD_SETTLE_S = 5.0  # let simultaneously-posted markers propagate before inference starts
 COORD_SETTLE_POLL_S = 0.5
 
@@ -105,13 +105,13 @@ def stage_tree(src, dst, *, ignore_extra=()):
 
 def resolve_repo_dir(explicit):
     """Locate a EpsilonEridaniReview checkout providing rubrics/ and runner/ — engine and rubrics
-    together, so they never drift. Order: --repo-dir, $TAUCETI_REVIEW_DIR, this source tree if it
+    together, so they never drift. Order: --repo-dir, $EPSILONERIDANI_REVIEW_DIR, this source tree if it
     is a checkout, else a cached shallow clone refreshed each run."""
     def ok(p):
         p = pathlib.Path(p)
         return (p / "rubrics").is_dir() and (p / "runner" / "review.py").is_file()
 
-    for cand in (explicit, os.environ.get("TAUCETI_REVIEW_DIR"),
+    for cand in (explicit, os.environ.get("EPSILONERIDANI_REVIEW_DIR"),
                  pathlib.Path(__file__).resolve().parent.parent):
         if cand and ok(cand):
             return pathlib.Path(cand).resolve()
@@ -428,7 +428,7 @@ def coordinate(repo, pr, head, avail, submitted_by):
 def main():
     ap = argparse.ArgumentParser(
         prog="epsiloneridani-review",
-        description="Run the Tau Ceti AI review on a PR using your own claude/codex subscription.")
+        description="Run the Epsilon Eridani AI review on a PR using your own claude/codex subscription.")
     ap.add_argument("pr", help="PR number to review")
     ap.add_argument("--repo", default=DEFAULT_CODE_REPO, help="code repo (owner/name)")
     ap.add_argument("--roadmap-repo", default=DEFAULT_ROADMAP_REPO)
@@ -451,12 +451,12 @@ def main():
                          "kiro uses an exact --kiro-model and is explicit-only (never auto-drawn). "
                          "Default: every auto-drawn reviewer you "
                          "have available (claude, codex)")
-    ap.add_argument("--claude-model", default=os.environ.get("TAUCETI_CLAUDE_MODEL") or None,
-                    help="exact direct-Claude model; overrides TAUCETI_CLAUDE_MODEL. "
+    ap.add_argument("--claude-model", default=os.environ.get("EPSILONERIDANI_CLAUDE_MODEL") or None,
+                    help="exact direct-Claude model; overrides EPSILONERIDANI_CLAUDE_MODEL. "
                          "Unset: keep the selected engine's default. Model must be priced in "
                          "runner/prices.json (e.g. claude-fable-5-1)")
-    ap.add_argument("--agy-model", default=os.environ.get("TAUCETI_AGY_MODEL") or None,
-                    help="exact agy model; overrides TAUCETI_AGY_MODEL. "
+    ap.add_argument("--agy-model", default=os.environ.get("EPSILONERIDANI_AGY_MODEL") or None,
+                    help="exact agy model; overrides EPSILONERIDANI_AGY_MODEL. "
                          "Unset: keep the selected engine's default.")
     ap.add_argument("--kiro-model", default="gpt-5.6-sol",
                     help="exact Kiro model (default: gpt-5.6-sol; e.g. claude-opus-5)")
@@ -527,7 +527,7 @@ def main():
     if not a.kiro_model or a.kiro_model.lower().startswith("auto"):
         die(f"--kiro-model needs an exact model id, not Kiro Auto: {a.kiro_model!r}")
 
-    # A whitespace-only TAUCETI_CLAUDE_MODEL is easy to produce from a CI variable and is
+    # A whitespace-only EPSILONERIDANI_CLAUDE_MODEL is easy to produce from a CI variable and is
     # truthy, so normalise here rather than letting it reach the engine and fail as an
     # unpriced model only after workspace setup and the Mathlib fetch.
     a.claude_model = (a.claude_model or "").strip() or None

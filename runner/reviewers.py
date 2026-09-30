@@ -16,7 +16,7 @@ from pricing import CACHE_READ, DEFAULT_PRICE, OPENROUTER_MODELS, PRICES
 # the allowlist (e.g. bash/edit/write) is rejected and the safe default is used instead.
 _RO_PI_TOOLS = {"read", "grep", "ls", "find"}
 
-_pi_tools_env = os.environ.get("TAUCETI_PI_TOOLS", "read,grep,ls")
+_pi_tools_env = os.environ.get("EPSILONERIDANI_PI_TOOLS", "read,grep,ls")
 
 PI_TOOLS = (_pi_tools_env
             if {t.strip() for t in _pi_tools_env.split(",") if t.strip()} <= _RO_PI_TOOLS

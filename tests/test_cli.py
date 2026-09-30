@@ -68,7 +68,7 @@ def test_claude_model_reaches_engine_and_flag_overrides_worker_environment():
                     "--no-mathlib", "--workdir", tmp, "--store", tmp + "/store",
                     "--submitted-by", "test-reviewer", *flags]
             stack.enter_context(patch.object(sys, "argv", argv))
-            stack.enter_context(patch.dict(os.environ, {"TAUCETI_CLAUDE_MODEL": env_model}))
+            stack.enter_context(patch.dict(os.environ, {"EPSILONERIDANI_CLAUDE_MODEL": env_model}))
             stack.enter_context(patch.object(cli, "run", fake_run))
             stack.enter_context(patch.object(cli, "need"))
             stack.enter_context(patch.object(cli.shutil, "which",

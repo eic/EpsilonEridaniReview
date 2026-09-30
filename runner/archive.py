@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write-time archival for the Tau Ceti review runner.
+"""Write-time archival for the Epsilon Eridani review runner.
 
 Reviews are durable the moment they finish: the runner writes one JSON record per execution
 into a local OUTBOX (`<store>/outbox/`), and a separate sync step drains the outbox into a

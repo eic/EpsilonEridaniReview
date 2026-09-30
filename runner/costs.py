@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""costs.py — attribute Tau Ceti AI-review spend (tokens AND $) to PRs and merged LOC.
+"""costs.py — attribute Epsilon Eridani AI-review spend (tokens AND $) to PRs and merged LOC.
 
 Three data sources, picked automatically:
 
@@ -563,7 +563,7 @@ def report(con, window="day", csv_path=None):
     src = con.execute("SELECT DISTINCT source FROM review_rounds").fetchall()
     src = ",".join(r[0] for r in src) or "—"
 
-    print("\n=== Tau Ceti review-cost report ===")
+    print("\n=== Epsilon Eridani review-cost report ===")
     print(f"source: {src} · {n_rounds} rounds over {n_prs} PRs")
     if tok:
         ti = sum(d["it"] or 0 for d in s["rows"]); tc = sum(d["ct"] or 0 for d in s["rows"])
@@ -699,7 +699,7 @@ def graph(con, out):
          f'font-family="-apple-system,Helvetica,Arial,sans-serif">',
          f'<rect width="{W}" height="{H}" fill="#fafafa"/>',
          f'<text x="{pad}" y="28" font-size="18" font-weight="bold">'
-         f'Tau Ceti AI-review — tokens &amp; imputed $</text>']
+         f'Epsilon Eridani AI-review — tokens &amp; imputed $</text>']
     sub = f'total {_esc(fmt_money(total))} · $/merged-LOC ${s["dollar_per_merged_loc"]:.4f} · ' \
           f'wasted {_esc(fmt_money(wasted))} ({100*wasted/total:.0f}%)'
     if tok:
