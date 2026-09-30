@@ -188,8 +188,8 @@ def reviewer_env(provider, keys, subscription=False):
         env["OPENROUTER_API_KEY"] = keys.get("openrouter", "")
     elif provider in ("gemini", "agy"):
         # agy CLI auth.
-        env["AGY_HOME"] = os.path.join(home, ".gemini", "antigravity-cli")
         if not subscription:
+            env["AGY_HOME"] = os.path.join(home, ".gemini", "antigravity-cli")
             env["GEMINI_API_KEY"] = keys.get("gemini", "")
         else:
             env["HOME"] = os.path.expanduser("~") # fallback to host HOME to inherit login
@@ -425,6 +425,7 @@ def run_claude(prompt, cwd, model, env):
            cwd=cwd, env=env, stdin_text=prompt)
     out = {"returncode": r.returncode, "raw_stderr": r.stderr[-3000:]}
     trace, meta = [], {}
+
     try:
         # Keep the external stream parse inside this boundary so an unforeseen event shape becomes
         # a diagnosable failed attempt rather than unwinding the whole review round.
@@ -691,8 +692,8 @@ def run_agy(prompt, cwd, model, env):
            "--dangerously-skip-permissions"]
     r = sh(cmd, cwd=cwd, env=env, stdin_text=prompt)
     out = {"returncode": r.returncode, "raw_stderr": r.stderr[-3000:]}
-    trace, meta = [], {}
-    text, usage, session_id, err, cost = "", None, None, "", 0.0
+
+    text, usage, session_id, err = "", None, None, ""
     
     for line in r.stdout.splitlines():
         line = line.strip()

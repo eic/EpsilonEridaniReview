@@ -185,8 +185,6 @@ def _add_run(con, agg, history, today, unpriced, *, run_key, pr, rd, rubric, pro
             unpriced[model] = unpriced.get(model, 0) + 1
         cost = cost_from_window(win, it, ct, ot)
         cost_today = cost_from_window(now, it, ct, ot)
-    elif re.search(r"Gemini|Antigravity|agy\\b", body, re.I):
-        agent = "gemini"
     else:
         cost = cost_today = recorded
     con.execute(
@@ -368,9 +366,7 @@ def ingest_logs(con: sqlite3.Connection, logs_dir: Path, reingest: bool = False)
             c = costs[-1]
             verdict, cost = c.group("verdict"), float(c.group("cost"))
             round_no, rubrics = int(c.group("n")), int(c.group("k"))
-        elif re.search(r"Gemini|Antigravity|agy\\b", body, re.I):
-        agent = "gemini"
-    else:
+        else:
             verdict, cost, round_no, rubrics = "errored", 0.0, None, None
         con.execute(
             "INSERT OR REPLACE INTO review_rounds "
@@ -414,6 +410,8 @@ def _agent_of(name: str) -> str:
         return "codex"
     if "claude" in n or "opus" in n or "sonnet" in n:
         return "claude"
+    if "gemini" in n or "agy" in n or "antigravity" in n:
+        return "gemini"
     if "kim" in n or "morrison" in n:
         return "human"
     return "other"
@@ -425,7 +423,7 @@ def _authoring_agent(data: dict) -> tuple[str, str]:
         agent = "codex"
     elif re.search(r"Claude Code|Prepared with Claude|with Claude\b|Opus", body, re.I):
         agent = "claude"
-    elif re.search(r"Gemini|Antigravity|agy\\b", body, re.I):
+    elif re.search(r"Gemini|Antigravity|\bagy\b", body, re.I):
         agent = "gemini"
     else:
         agent = None
@@ -534,9 +532,7 @@ def windowed(con, window):
         if window == "week":
             y, w, _ = date.fromisoformat(r["day"]).isocalendar()
             key = f"{y}-W{w:02d}"
-        elif re.search(r"Gemini|Antigravity|agy\\b", body, re.I):
-        agent = "gemini"
-    else:
+        else:
             key = r["day"]
         agg[key][0] += r["cost"]; agg[key][1] += 1
         agg[key][2] += r["output_tokens"] or 0
@@ -588,8 +584,6 @@ def report(con, window="day", csv_path=None):
             print(f"         vs engine's as-recorded total: {fmt_money(recorded)} "
                   f"({'+' if d >= 0 else '−'}{fmt_money(abs(d))} — old runs used a stale table "
                   f"with no cache discount, since fixed)")
-    elif re.search(r"Gemini|Antigravity|agy\\b", body, re.I):
-        agent = "gemini"
     else:
         print(f"DOLLARS  {fmt_money(s['total'])} imputed  (no token data — log source)")
 
