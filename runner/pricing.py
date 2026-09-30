@@ -29,14 +29,14 @@ AGY_MODEL = "gemini-3.1-pro"
 # ByteDance Seed-Prover are whole-proof search systems, not tool-using agents, and aren't
 # served on OpenRouter, so they cannot drive `pi`.)
 # Ids are env-overridable; the worker (round.sh) overrides the *authoring* model with
-# DEEPSEEK_MODEL / MINIMAX_MODEL, so accept those too (with a TAUCETI_-prefixed form taking
+# DEEPSEEK_MODEL / MINIMAX_MODEL, so accept those too (with a EPSILONERIDANI_-prefixed form taking
 # precedence) — a single `DEEPSEEK_MODEL=…` then pins both authoring and review to one id.
 OPENROUTER_MODELS = {
-    "deepseek": (os.environ.get("TAUCETI_DEEPSEEK_MODEL") or os.environ.get("DEEPSEEK_MODEL")
+    "deepseek": (os.environ.get("EPSILONERIDANI_DEEPSEEK_MODEL") or os.environ.get("DEEPSEEK_MODEL")
                  or "deepseek/deepseek-v4-pro"),
-    "minimax": (os.environ.get("TAUCETI_MINIMAX_MODEL") or os.environ.get("MINIMAX_MODEL")
+    "minimax": (os.environ.get("EPSILONERIDANI_MINIMAX_MODEL") or os.environ.get("MINIMAX_MODEL")
                 or "minimax/minimax-m3"),
-    "grok": (os.environ.get("TAUCETI_GROK_MODEL") or os.environ.get("GROK_MODEL")
+    "grok": (os.environ.get("EPSILONERIDANI_GROK_MODEL") or os.environ.get("GROK_MODEL")
              or "x-ai/grok-4.3"),
 }
 

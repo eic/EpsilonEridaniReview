@@ -29,7 +29,7 @@ _VERDICTS = {}   # rubric -> "approve" | "request_changes" | "block"; set per sc
 def _fake_runner(prompt, cwd, model, env):
     """Stand in for run_claude/run_codex/run_pi: find which rubric this prompt is for (each rubric
     file carries an ANGLE:<name> sentinel), echo the one-time marker, and emit the desired verdict."""
-    marker = re.search(r"TAUCETI-VERDICT-\w+", prompt).group(0)
+    marker = re.search(r"EPSILONERIDANI-VERDICT-\w+", prompt).group(0)
     rubric = re.search(r"ANGLE:(\S+)", prompt).group(1)
     verdict = _VERDICTS.get(rubric, "approve")
     vo = {"verdict": verdict, "summary": f"{rubric} says {verdict}",

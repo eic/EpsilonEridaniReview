@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Trusted-phase poster for the Tau Ceti review runner.
+"""Trusted-phase poster for the Epsilon Eridani review runner.
 
 Runs AFTER the tokenless reviewer phase, with a scoped GitHub App token in `$GH_TOKEN`. It reads
 the post plan the runner wrote and:
