@@ -1,6 +1,10 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
 [project]
 name = "epsiloneridani-review"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Run the Epsilon Eridani AI code review on a PR using your own Claude/Codex/Kiro subscription."
 readme = "REVIEWING.md"
 requires-python = ">=3.10"
@@ -12,12 +16,8 @@ dependencies = []
 epsiloneridani-review = "runner.cli:main"
 epsiloneridani-review-costs = "runner.costs:main"
 
-[build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
+[tool.hatch.version]
+source = "vcs"
 
-[tool.setuptools]
+[tool.hatch.build.targets.wheel]
 packages = ["runner"]
-
-[tool.setuptools.package-data]
-runner = ["prices.json"]
