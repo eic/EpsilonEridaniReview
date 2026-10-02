@@ -1,16 +1,53 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling>=1.27", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
 
 [project]
 name = "epsiloneridani-review"
-dynamic = ["version"]
+dynamic = ["version", "readme"]
 description = "Run the Epsilon Eridani AI code review on a PR using your own Claude/Codex/Kiro subscription."
-readme = "REVIEWING.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Wouter Deconinck" }]
+keywords = ["lean", "lean4", "mathlib", "code-review", "ai-review", "claude", "codex", "github"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Quality Assurance",
+]
 # No Python dependencies: the engine shells out to the `git`, `gh`, `claude`, `codex`, and `kiro-cli` CLIs.
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/eic/EpsilonEridaniReview"
+Documentation = "https://github.com/eic/EpsilonEridaniReview/blob/main/REVIEWING.md"
+Source = "https://github.com/eic/EpsilonEridaniReview"
+Issues = "https://github.com/eic/EpsilonEridaniReview/issues"
+Changelog = "https://github.com/eic/EpsilonEridaniReview/releases"
+
+# The PyPI description is REVIEWING.md, with its relative links (SECURITY.md) made absolute, since
+# PyPI renders the text on its own and a relative link there leads nowhere.
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "REVIEWING.md"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\]\((?!https?://|#|mailto:)([^)]+)\)'
+replacement = '](https://github.com/eic/EpsilonEridaniReview/blob/main/\1)'
 
 [project.scripts]
 epsiloneridani-review = "runner.cli:main"
