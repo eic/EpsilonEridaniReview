@@ -685,10 +685,22 @@ def run_pi(prompt, cwd, model, env):
         out.update(raw_stdout=r.stdout[-3000:], error_message=err)
     return out
 
+# Reasoning effort for agy reviews. agy model ids can carry their own effort suffix
+# (gemini-3.8-flash-high), and agy rejects an --effort that disagrees with it, so a suffixed id
+# keeps its own effort and an unsuffixed one gets this default.
+AGY_REVIEW_EFFORT = "high"
+_AGY_EFFORT_SUFFIX = re.compile(r"-(low|medium|high|xhigh|max)$")
+
+
+def agy_effort(model):
+    m = _AGY_EFFORT_SUFFIX.search(model or "")
+    return m.group(1) if m else AGY_REVIEW_EFFORT
+
+
 def run_agy(prompt, cwd, model, env):
     # Drive the Antigravity CLI (agy) as a reviewer, read-only.
     cmd = ["agy", "--input-format", "text", "--output-format", "stream-json", "--model", model,
-           "--effort", "low", "--disable-slash-commands", "--sandbox", 
+           "--effort", agy_effort(model), "--disable-slash-commands", "--sandbox",
            "--dangerously-skip-permissions"]
     r = sh(cmd, cwd=cwd, env=env, stdin_text=prompt)
     out = {"returncode": r.returncode, "raw_stderr": r.stderr[-3000:]}
