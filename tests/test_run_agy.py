@@ -9,22 +9,26 @@ import reviewers  # noqa: E402
 from pricing import PRICES  # noqa: E402
 
 fails = 0
+calls = []
 
 def check(name, cond):
     global fails
     fails += not cond
     print(f"[{'OK ' if cond else 'BAD'}] {name}")
 
-def run(events, ws, rc=0):
+def run(events, ws, rc=0, model="gemini-3.1-pro"):
     stream = "\n".join(json.dumps(e) if isinstance(e, dict) else e for e in events)
 
     class R:
         returncode, stdout, stderr = rc, stream, "stderr text"
 
     orig = reviewers.sh
-    reviewers.sh = lambda *a, **k: R
+    def fake_sh(cmd, *a, **k):
+        calls.append(cmd)
+        return R
+    reviewers.sh = fake_sh
     try:
-        return reviewers.run_agy("prompt", ws, "gemini-3.1-pro", {})
+        return reviewers.run_agy("prompt", ws, model, {})
     finally:
         reviewers.sh = orig
 
@@ -71,8 +75,22 @@ def test_agy_parsing():
         out_tol = run(["invalid json", "{ broken json", ev_success], ws)
         check("tolerates invalid json lines", out_tol.get("session_id") == "sid-123")
 
+def effort_of(cmd):
+    return cmd[cmd.index("--effort") + 1]
+
+def test_agy_effort():
+    ev = {"event": "result", "result": {"status": "SUCCESS", "response": ""}}
+    with tempfile.TemporaryDirectory() as ws:
+        for model, want in [("gemini-3.1-pro", "high"), ("gemini-3.8-flash", "high"),
+                            ("gemini-3.8-flash-high", "high"), ("gemini-3.8-flash-medium", "medium"),
+                            ("gemini-3.8-flash-low", "low")]:
+            calls.clear()
+            run([ev], ws, model=model)
+            check(f"{model} runs at --effort {want}", effort_of(calls[-1]) == want)
+
 def main():
     test_agy_parsing()
+    test_agy_effort()
     print("FAIL" if fails else "PASS")
     return 1 if fails else 0
 
