@@ -9,10 +9,11 @@ identity, and defaults to a dry run that prints the verdicts without touching th
 
     epsiloneridani-review 42                 # review PR #42, print the verdicts (no posting)
     epsiloneridani-review 42 --post          # also post the scoreboard + threads as you
-    epsiloneridani-review 42 --rubrics scope,correctness,reuse --no-mathlib
+    epsiloneridani-review 42 --rubrics scope,correctness,reuse --no-upstream
 
 It assembles the same reviewer workspace CI does — the PR source at its head, the roadmap, and
-(unless --no-mathlib) the pinned Mathlib source for grep — then invokes the engine in
+(unless --no-upstream) the source of every direct dependency at its pinned commit (Mathlib,
+Physlib, TauCeti) for grep — then invokes the engine in
 `--auth subscription` mode. The rubrics and engine come from a checkout of THIS repo
 (EpsilonEridaniReview): the one you ran from if it is a checkout, else a cached shallow clone, so the
 rubrics always match the engine.
@@ -86,8 +87,26 @@ def need(tool, hint):
         die(f"`{tool}` not found on PATH. {hint}")
 
 
+def direct_dependencies(manifest_text):
+    """The direct dependencies of a Lake manifest: the packages it does not mark `inherited`
+    (Lake marks a dependency's own dependencies inherited), each as {name, url, rev}. The same
+    definition EpsilonEridani's bump guard uses. Malformed entries are skipped, not guessed at."""
+    try:
+        packages = json.loads(manifest_text).get("packages", [])
+    except (json.JSONDecodeError, AttributeError):
+        return []
+    deps = []
+    for pkg in packages if isinstance(packages, list) else []:
+        if not isinstance(pkg, dict) or pkg.get("inherited") is not False:
+            continue
+        name, url, rev = pkg.get("name"), pkg.get("url"), pkg.get("rev")
+        if all(isinstance(v, str) and v for v in (name, url, rev)):
+            deps.append({"name": name.strip("«»"), "url": url, "rev": rev})
+    return deps
+
+
 def stage_tree(src, dst, *, ignore_extra=()):
-    """Copy a pre-staged input tree (roadmap / Mathlib) into the workspace. symlinks=True so a symlink
+    """Copy a pre-staged input tree (roadmap / upstream source) into the workspace. symlinks=True so a symlink
     in the staged tree is copied AS a symlink, never dereferenced — a malicious/stray link can't pull
     host files into the reviewer workspace (and transcripts). Skip .git and heavy non-source dirs so a
     plain dev checkout doesn't blow disk/time. Fail loudly instead of tracebacking."""
@@ -460,15 +479,17 @@ def main():
                          "Unset: keep the selected engine's default.")
     ap.add_argument("--kiro-model", default="gpt-5.6-sol",
                     help="exact Kiro model (default: gpt-5.6-sol; e.g. claude-opus-5)")
-    ap.add_argument("--no-mathlib", action="store_true",
-                    help="skip fetching the pinned Mathlib source (faster; reuse checks weaker)")
+    ap.add_argument("--no-upstream", action="store_true",
+                    help="skip fetching the pinned upstream sources (Mathlib, Physlib, TauCeti: every "
+                         "direct dependency of the PR's manifest); faster, reuse checks weaker")
     ap.add_argument("--roadmap-dir", default="",
                     help="use a pre-staged roadmap tree (copied into the workspace) instead of cloning "
                          "--roadmap-repo. For sandboxes whose network can't reach a second repo "
                          "(e.g. a repo-scoped review bubble): stage the roadmap on the host and mount it.")
-    ap.add_argument("--mathlib-dir", default="",
-                    help="use a pre-staged Mathlib source tree (copied into the workspace) instead of "
-                         "fetching it. Same motivation as --roadmap-dir; ignored with --no-mathlib.")
+    ap.add_argument("--upstream-dir", action="append", default=[], metavar="NAME=PATH",
+                    help="use a pre-staged source tree for the direct dependency NAME (its name in "
+                         "lake-manifest.json, e.g. mathlib=/srv/mathlib4) instead of fetching it; "
+                         "repeatable. Same motivation as --roadmap-dir; ignored with --no-upstream.")
     ap.add_argument("--repo-dir", default="",
                     help="path to a EpsilonEridaniReview checkout (default: auto-detect / cached clone)")
     ap.add_argument("--workdir", default="", help="workspace dir (default: a fresh temp dir)")
@@ -677,7 +698,7 @@ def main():
     (work / "pr_desc.txt").write_text(
         f"# {meta.get('title','')}\n\n{meta.get('body','') or ''}\n")
 
-    # Reviewer workspace: PR source at head, roadmap, optional Mathlib source. No .git, no creds.
+    # Reviewer workspace: PR source at head, roadmap, optional upstream sources. No .git, no creds.
     run(["git", "clone", "-q", "--depth", "1", f"https://github.com/{a.repo}",
          str(work / "code")])
     run(["git", "-C", str(work / "code"), "fetch", "-q", "--depth", "1", "origin", head], quiet=True)
@@ -690,32 +711,41 @@ def main():
              str(work / "roadmap")])
         shutil.rmtree(work / "roadmap" / ".git", ignore_errors=True)
 
-    mathlib_args = []
-    if not a.no_mathlib and a.mathlib_dir:   # pre-staged Mathlib source; copy into the workspace
-        stage_tree(a.mathlib_dir, work / "mathlib",
-                   ignore_extra=(".lake", "build", ".cache", ".elan"))
-        mathlib_args = ["--mathlib-path", "mathlib"]
-    elif not a.no_mathlib:
-        # Mathlib rev comes from the PR head's own manifest here (local trusted use); CI instead
-        # pins it from the base repo to avoid evaluating attacker-controlled manifests.
+    upstream_args = []
+    if not a.no_upstream:
+        # Every direct dependency (Mathlib, Physlib, TauCeti) at its pinned commit, so the reuse
+        # and naming rubrics can grep all of them: a replacement for new material may live in any.
+        # Revs come from the PR head's own manifest here (local trusted use); CI instead pins
+        # them from the base repo to avoid evaluating attacker-controlled manifests.
         manifest = work / "code" / "lake-manifest.json"
-        rev = ""
-        if manifest.is_file():
-            for pkg in json.loads(manifest.read_text()).get("packages", []):
-                if pkg.get("name") == "mathlib":
-                    rev = pkg.get("rev", "")
-        if rev:
-            ml = work / "mathlib"
-            run(["git", "init", "-q", str(ml)], quiet=True)
-            run(["git", "-C", str(ml), "remote", "add", "origin",
-                 "https://github.com/leanprover-community/mathlib4"], quiet=True)
-            print(f"fetching Mathlib source @ {rev[:12]} (for reuse/grep)…", file=sys.stderr)
-            run(["git", "-C", str(ml), "fetch", "-q", "--depth", "1", "origin", rev], quiet=True)
-            run(["git", "-C", str(ml), "checkout", "-q", "FETCH_HEAD"], quiet=True)
-            mathlib_args = ["--mathlib-path", "mathlib"]
-        else:
-            print("note: no mathlib rev in lake-manifest.json; skipping Mathlib source.",
+        deps = direct_dependencies(manifest.read_text()) if manifest.is_file() else []
+        staged = {}
+        for spec in a.upstream_dir:
+            name, _, path = spec.partition("=")
+            if not name or not path:
+                die(f"--upstream-dir expects NAME=PATH, got {spec!r}")
+            staged[name] = path
+        unknown = sorted(set(staged) - {dep["name"] for dep in deps})
+        if unknown:
+            die(f"--upstream-dir names no direct dependency of the PR's manifest: {unknown}")
+        if not deps:
+            print("note: no direct dependencies in lake-manifest.json; skipping upstream sources.",
                   file=sys.stderr)
+        for dep in deps:
+            dst = work / "upstream" / dep["name"]
+            if dep["name"] in staged:   # pre-staged (e.g. mounted into a network-restricted bubble)
+                stage_tree(staged[dep["name"]], dst,
+                           ignore_extra=(".lake", "build", ".cache", ".elan"))
+            else:
+                dst.mkdir(parents=True, exist_ok=True)
+                run(["git", "init", "-q", str(dst)], quiet=True)
+                run(["git", "-C", str(dst), "remote", "add", "origin", dep["url"]], quiet=True)
+                print(f"fetching {dep['name']} source @ {dep['rev'][:12]} (for reuse/grep)…",
+                      file=sys.stderr)
+                run(["git", "-C", str(dst), "fetch", "-q", "--depth", "1", "origin", dep["rev"]],
+                    quiet=True)
+                run(["git", "-C", str(dst), "checkout", "-q", "FETCH_HEAD"], quiet=True)
+            upstream_args += ["--upstream-path", f"{dep['name']}=upstream/{dep['name']}"]
 
     # The store (ledger of scoreboard/thread comment ids + per-rubric verdicts) is PERSISTENT and
     # lives outside the throwaway workspace, so a re-review edits the same scoreboard and threads in
@@ -755,7 +785,7 @@ def main():
            *(["--shadow", "--arm", f"shadow:{a.label}"] if a.shadow else []),
            "--rubrics-dir", str(repo_dir / "rubrics"), "--tool-cwd", str(work),
            "--code-path", "code", "--roadmap-path", "roadmap",
-           *mathlib_args,
+           *upstream_args,
            "--diff-file", str(work / "diff.txt"), "--paths-file", str(work / "paths.z"),
            "--pr-desc-file", str(work / "pr_desc.txt"),
            "--store", str(store), "--head-sha", head, "--base-sha", base,

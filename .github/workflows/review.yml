@@ -141,18 +141,25 @@ jobs:
           path: code
           persist-credentials: false
 
-      - name: Trusted Mathlib source for reviewer grep
-        # Rev comes from the BASE repo's manifest, never the PR's. We never evaluate the PR's
+      - name: Trusted upstream sources for reviewer grep
+        # Revs come from the BASE repo's manifest, never the PR's. We never evaluate the PR's
         # lakefile/manifest (that would be arbitrary code execution on attacker input — I1).
+        # Every direct dependency (the packages the manifest does not mark inherited: Mathlib,
+        # Physlib, TauCeti) is fetched at its pinned commit, so the reuse and naming rubrics can
+        # grep all of them; a replacement for new material may live in any.
         run: |
           base=$(mktemp -d)
           git clone --depth 1 https://github.com/eic/EpsilonEridani "$base/base"
-          MREV=$(jq -r '.packages[] | select(.name=="mathlib") | .rev' "$base/base/lake-manifest.json")
-          echo "mathlib rev (from base manifest): $MREV"
-          git init -q mathlib
-          git -C mathlib remote add origin https://github.com/leanprover-community/mathlib4
-          git -C mathlib fetch -q --depth 1 origin "$MREV"
-          git -C mathlib checkout -q FETCH_HEAD
+          mkdir upstream
+          jq -r '.packages[] | select(.inherited == false) | "\(.name) \(.url) \(.rev)"' \
+            "$base/base/lake-manifest.json" | while read -r name url rev; do
+            echo "$name rev (from base manifest): $rev"
+            git init -q "upstream/$name"
+            git -C "upstream/$name" remote add origin "$url"
+            git -C "upstream/$name" fetch -q --depth 1 origin "$rev"
+            git -C "upstream/$name" checkout -q FETCH_HEAD
+          done
+          test -n "$(ls upstream)"
 
       - name: Setup Node and CLIs
         uses: actions/setup-node@v7
@@ -161,13 +168,13 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code @openai/codex
 
       - name: Assemble clean reviewer workspace
-        # Reviewers run here: only PR source (no .git), roadmap, Mathlib source, and the diff.
+        # Reviewers run here: only PR source (no .git), roadmap, upstream sources, and the diff.
         # No store/, no runner/, no .git configs, no credentials anywhere in this tree.
         run: |
           REVROOT=$(mktemp -d)
           rsync -a --exclude='.git' code/ "$REVROOT/code/"
           rsync -a --exclude='.git' roadmap/ "$REVROOT/roadmap/"
-          mv mathlib "$REVROOT/mathlib"
+          mv upstream "$REVROOT/upstream"
           cp diff.txt "$REVROOT/diff.txt"
           cp pr_desc.txt "$REVROOT/pr_desc.txt"
           echo "REVROOT=$REVROOT" >> "$GITHUB_ENV"
@@ -201,10 +208,14 @@ jobs:
           if [ "$MODE" = "reply" ]; then
             REPLY_ARGS="--reply-rubric ${{ inputs.reply_rubric }} --reply-file $PWD/reply.txt"
           fi
+          UPSTREAM_ARGS=""
+          for d in "$REVROOT"/upstream/*/; do
+            n=$(basename "$d"); UPSTREAM_ARGS="$UPSTREAM_ARGS --upstream-path $n=upstream/$n"
+          done
           python3 runner/review.py \
             --repo eic/EpsilonEridani --pr "$PR" --mode "$MODE" $REPLY_ARGS \
             --rubrics-dir rubrics --tool-cwd "$REVROOT" \
-            --code-path code --roadmap-path roadmap --mathlib-path mathlib \
+            --code-path code --roadmap-path roadmap $UPSTREAM_ARGS \
             --diff-file diff.txt --paths-file paths.z --pr-desc-file pr_desc.txt --store store --daily-budget 50 \
             --head-sha "$HEAD_SHA" --base-sha "$BASE_SHA" --merge-base-sha "$MERGE_BASE" \
             --rubrics-sha "$RUBRICS_SHA" --archive-dir store/outbox \

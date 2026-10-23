@@ -8,9 +8,9 @@ A new declaration that a located existing declaration directly replaces should r
 ## Detecting potential duplication
 
 Run each of these searches. Choose relevant search terms and grep to verify: `EpsilonEridani/`
-and the Mathlib source tree the runner provides (its path is in your context). In a built checkout
-the other dependencies are under `.lake/packages/`: `Physlib/Physlib`, `Physlib/PhyslibAlpha`
-(PhyslibAlpha is a library inside the Physlib package, not a package of its own) and `TauCeti`.
+and every upstream source tree the runner provides (their paths are in your context: Mathlib, the
+Physlib package with its `Physlib`, `PhyslibAlpha` and `QuantumInfo` libraries, and TauCeti). A
+replacement for new material may live in any of them, under a different name; search all.
 
 - For each new declaration, search for an existing one with the same content.
   (Sometimes you'll find something with a different name than expected, or a variant that

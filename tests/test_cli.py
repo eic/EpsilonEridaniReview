@@ -65,7 +65,7 @@ def test_claude_model_reaches_engine_and_flag_overrides_worker_environment():
     for env_model, flags, expected in cases:
         with tempfile.TemporaryDirectory() as tmp, contextlib.ExitStack() as stack:
             argv = ["epsiloneridani-review", "1", "--reviewer", "claude", "--no-archive",
-                    "--no-mathlib", "--workdir", tmp, "--store", tmp + "/store",
+                    "--no-upstream", "--workdir", tmp, "--store", tmp + "/store",
                     "--submitted-by", "test-reviewer", *flags]
             stack.enter_context(patch.object(sys, "argv", argv))
             stack.enter_context(patch.dict(os.environ, {"EPSILONERIDANI_CLAUDE_MODEL": env_model}))
@@ -103,7 +103,7 @@ def test_unresolved_merge_base_stops_before_the_diff_or_review():
         return types.SimpleNamespace(returncode=0, stdout="", stderr="")
 
     with tempfile.TemporaryDirectory() as tmp, contextlib.ExitStack() as stack:
-        argv = ["epsiloneridani-review", "1", "--reviewer", "claude", "--no-archive", "--no-mathlib",
+        argv = ["epsiloneridani-review", "1", "--reviewer", "claude", "--no-archive", "--no-upstream",
                 "--workdir", tmp, "--store", tmp + "/store", "--submitted-by", "test-reviewer"]
         stack.enter_context(patch.object(sys, "argv", argv))
         stack.enter_context(patch.object(cli, "run", fake_run))
