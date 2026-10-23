@@ -1,14 +1,16 @@
 # Reuse and duplication
 
-Pull requests must not duplicate existing material from Mathlib or EpsilonEridani, whether directly or via unnecessary thin wrappers. Whenever it is possible to reuse existing developments from Mathlib, Physlib, PhyslibAlpha, or EpsilonEridani, it is essential to do so, and to ensure that new contributions make effective use of the upstream theories (Mathlib, Physlib, PhyslibAlpha, EpsilonEridani).
+Pull requests must not duplicate existing material from Mathlib or EpsilonEridani, whether directly or via unnecessary thin wrappers. Whenever it is possible to reuse existing developments from Mathlib, Physlib, PhyslibAlpha, TauCeti, or EpsilonEridani, it is essential to do so, and to ensure that new contributions make effective use of the upstream theories (Mathlib, Physlib, PhyslibAlpha, TauCeti, EpsilonEridani).
 
 A new declaration that a located existing declaration directly replaces should result in a
 `block` review; every other form of duplication below is `request_changes`.
 
 ## Detecting potential duplication
 
-Run each of these searches. Choose relevant search terms and grep (under
-`.lake/packages/{mathlib,physlib,physlib_alpha,epsiloneridani}` and `EpsilonEridani/`) to verify.
+Run each of these searches. Choose relevant search terms and grep to verify: `EpsilonEridani/`
+and the Mathlib source tree the runner provides (its path is in your context). In a built checkout
+the other dependencies are under `.lake/packages/`: `Physlib/Physlib`, `Physlib/PhyslibAlpha`
+(PhyslibAlpha is a library inside the Physlib package, not a package of its own) and `TauCeti`.
 
 - For each new declaration, search for an existing one with the same content.
   (Sometimes you'll find something with a different name than expected, or a variant that
