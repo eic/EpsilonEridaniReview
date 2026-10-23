@@ -35,8 +35,8 @@ so safety rests entirely on breaking links 1–2: removing the reviewer's *acces
 
 ## Mitigations (mapped to audit findings)
 
-- **I1** — never evaluate PR-controlled Lake configuration in the privileged job; Mathlib source
-  is cloned at the rev pinned in the *base* manifest. Dependency bumps may change only the manifest
+- **I1** — never evaluate PR-controlled Lake configuration in the privileged job; every upstream
+  source (Mathlib, Physlib, TauCeti) is cloned at the rev pinned in the *base* manifest. Dependency bumps may change only the manifest
   and toolchain pins, which a trusted validator reads as data and checks for forward movement before
   they are overlaid inside the secretless landrun sandbox. Lakefiles never enter the automated merge
   scope. Closes the pre-auth RCE.

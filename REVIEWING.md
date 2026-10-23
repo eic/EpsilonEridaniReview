@@ -63,7 +63,7 @@ epsiloneridani-review 42 --reviewer claude --claude-model claude-fable-5-1
 epsiloneridani-review 42 --reviewer kiro --kiro-model gpt-5.6-sol
 epsiloneridani-review 42 --reviewer kiro --kiro-model claude-opus-5
 epsiloneridani-review 42 --reviewer deepseek   # use DeepSeek via OpenRouter + the `pi` agent
-epsiloneridani-review 42 --no-mathlib          # skip the Mathlib clone (faster; weaker reuse checks)
+epsiloneridani-review 42 --no-upstream         # skip the upstream clones (faster; weaker reuse checks)
 ```
 
 It **defaults to a dry run**: it prints the scoreboard and each rubric's thread and posts nothing.
@@ -77,7 +77,8 @@ Add `--post` to publish. Useful flags:
 | `--claude-model MODEL` | exact direct-Claude model ID, also configurable through `EPSILONERIDANI_CLAUDE_MODEL` for managed workers. The flag takes precedence. Unset: use the selected engine's default. The model must have an entry in `runner/prices.json`; its exact ID is recorded in review provenance |
 | `--kiro-model MODEL` | exact Kiro model ID; defaults to `gpt-5.6-sol`. Use `claude-opus-5` for Kiro's current Opus |
 | `--mode commit` | review only rubrics not already passing in the local store (default `manual` = all) |
-| `--no-mathlib` | skip fetching pinned Mathlib source; `reuse`/`naming` can't grep Mathlib |
+| `--no-upstream` | skip fetching the pinned upstream sources (Mathlib, Physlib, TauCeti); `reuse`/`naming` can't grep them |
+| `--upstream-dir NAME=PATH` | use a pre-staged source tree for the direct dependency NAME instead of fetching it; repeatable |
 | `--repo owner/name` | review a different repo (default `eic/EpsilonEridani`) |
 | `--auth api` | use the matching `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `KIRO_API_KEY` instead of a browser login |
 | `--keep` | keep the temporary workspace for inspection |
@@ -86,7 +87,8 @@ Add `--post` to publish. Useful flags:
 
 1. Reads the PR head SHA, diff, and description via `gh`.
 2. Builds the same read-only reviewer workspace CI uses: the PR source at its head, the roadmap
-   repo, and (unless `--no-mathlib`) the pinned Mathlib source for `reuse`/`naming` to grep.
+   repo, and (unless `--no-upstream`) the source of every direct dependency (Mathlib, Physlib,
+   TauCeti) at its pinned commit for `reuse`/`naming` to grep.
 3. Runs each rubric through `claude -p`, `codex exec`, exact-model `kiro-cli chat`, or the `pi`
    agent against OpenRouter, **read-only** (`Read`/`Grep`/`Glob`, or pi's `read`/`grep`/`ls` —
    no shell, no writes). In `--auth subscription` mode Claude, Codex, and Kiro use the logged-in

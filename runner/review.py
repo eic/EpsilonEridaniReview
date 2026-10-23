@@ -572,6 +572,30 @@ def merge_decision(a, states, candidates, all_green, head):
                         a.merge_path_prefix, a.merge_allow_file, a.bump_guard, a.ci_build, a.scope)
 
 
+
+def upstream_sources_context(specs, tool_cwd):
+    """One context line per staged upstream source (`NAME=PATH`, PATH relative to the reviewer's
+    cwd), naming the Lean libraries the tree provides: the top-level directories that have a root
+    module beside them (Mathlib provides `Mathlib`; the Physlib package provides `Physlib`,
+    `PhyslibAlpha` and `QuantumInfo`). Reviewers grep these before claiming a declaration exists."""
+    lines = []
+    for spec in specs:
+        name, _, rel = spec.partition("=")
+        if not name or not rel:
+            raise SystemExit(f"--upstream-path expects NAME=PATH, got {spec!r}")
+        root = pathlib.Path(tool_cwd) / rel
+        libraries = sorted(
+            child.name for child in root.iterdir()
+            if child.is_dir() and (root / f"{child.name}.lean").is_file()
+        ) if root.is_dir() else []
+        label = "Mathlib" if name == "mathlib" else name
+        provides = (" (libraries " + ", ".join(f"`{lib}`" for lib in libraries) + ")"
+                    if libraries else "")
+        lines.append(f"- {label} source{provides}: `./{rel}` "
+                     "(grep before claiming a declaration exists).\n")
+    return "".join(lines)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", default="eic/EpsilonEridani")
@@ -581,7 +605,9 @@ def main():
     ap.add_argument("--tool-cwd", required=True)
     ap.add_argument("--code-path", default="code")
     ap.add_argument("--roadmap-path", default="roadmap")
-    ap.add_argument("--mathlib-path", default="")
+    ap.add_argument("--upstream-path", action="append", default=[], metavar="NAME=PATH",
+                    help="a direct dependency's source tree, relative to --tool-cwd, for the "
+                         "reviewers to grep (e.g. mathlib=upstream/mathlib); repeatable")
     ap.add_argument("--lean-src", default="")
     ap.add_argument("--diff-file", required=True)
     ap.add_argument("--paths-file", default="",
@@ -918,9 +944,7 @@ def main():
     if len(diff_full) > len(diff):
         prov["diff_prompt_truncated"] = True
         prov["diff_prompt_sha256"] = hashlib.sha256(diff.encode()).hexdigest()
-    src = ""
-    if a.mathlib_path:
-        src += f"- Mathlib source: `./{a.mathlib_path}` (grep before claiming a declaration exists).\n"
+    src = upstream_sources_context(a.upstream_path, a.tool_cwd)
     if a.lean_src:
         src += f"- Lean core/toolchain source: `{a.lean_src}`.\n"
     pr_desc = ""
