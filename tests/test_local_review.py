@@ -84,6 +84,13 @@ def drive(argv, states):
         seen["coordinated"] = True
         return ["claude"]
 
+    real_which = cli.shutil.which
+
+    def fake_which(name, *a, **k):
+        # The CLI only offers a reviewer whose binary is on PATH; a CI runner has no `claude`, and
+        # the engine is stubbed anyway, so report one rather than depend on the machine.
+        return f"/usr/bin/{name}" if name == "claude" else real_which(name, *a, **k)
+
     patches = {"run": fake_run, "pr_ref_oids": lambda repo, pr: ("remote-head-not-used", BASE),
                "gh_json": lambda repo, pr, fields: {"title": "t", "body": "b"},
                "fetch_thread_replies": lambda repo, pr: {}, "coordinate": no_coordinate,
@@ -91,6 +98,7 @@ def drive(argv, states):
     saved = {k: getattr(cli, k) for k in patches}
     for k, v in patches.items():
         setattr(cli, k, v)
+    cli.shutil.which = fake_which
     old_argv, out, code = sys.argv, io.StringIO(), None
     sys.argv = ["epsiloneridani-review", *argv]
     try:
@@ -102,6 +110,7 @@ def drive(argv, states):
         sys.argv = old_argv
         for k, v in saved.items():
             setattr(cli, k, v)
+        cli.shutil.which = real_which
     return seen, out.getvalue(), code
 
 
