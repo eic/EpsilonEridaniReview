@@ -231,6 +231,48 @@ def rubrics_repo_sha(repo_dir):
     return (r.stdout.strip() if r.returncode == 0 else ""), True
 
 
+def local_merge_base(local, repo, base, head):
+    """The merge base of the PR's base commit and the local `head`. The base commit lives in the
+    upstream repo (a fork checkout's `origin` may not have it), so fetch it by SHA from there."""
+    run(["git", "-C", str(local), "fetch", "-q", f"https://github.com/{repo}", base],
+        quiet=True, allow_fail=True)
+    r = run(["git", "-C", str(local), "merge-base", base, head], capture=True, quiet=True, allow_fail=True)
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def local_diff(local, merge_base, head, work):
+    """diff.txt and paths.z for `head` against `merge_base`, from the local checkout. pr_diff.py
+    cannot see an unpushed commit (it fetches by SHA from GitHub, anonymously, for CI's sake); this
+    is the trusted-operator equivalent, with external diff drivers and textconv off like there, and
+    raw bytes like there."""
+    git = ["git", "-C", str(local), "-c", "core.quotePath=false"]
+    d = subprocess.run([*git, "diff", "--no-ext-diff", "--no-textconv", "--no-color", "--binary",
+                        merge_base, head], capture_output=True)
+    if d.returncode != 0:
+        return d
+    (work / "diff.txt").write_bytes(d.stdout)
+    pz = subprocess.run([*git, "diff", "--no-renames", "--name-only", "-z", merge_base, head],
+                        capture_output=True)
+    (work / "paths.z").write_bytes(pz.stdout)
+    return pz
+
+
+def local_verdict_line(store, pr, rubrics):
+    """The one line an agent acts on: PASS when every rubric this run judged is green on the
+    reviewed head, else FAIL naming the others. Read from the run's own scratch ledger."""
+    try:
+        led = json.loads((pathlib.Path(store) / "ledger.json").read_text())
+        rnd = led["prs"][str(pr)]["rounds"][-1]
+    except (OSError, KeyError, IndexError, ValueError):
+        return "LOCAL-REVIEW: FAIL (no verdicts were recorded; see the log above)"
+    want = [r.strip() for r in rubrics.split(",") if r.strip()] or list(rnd.get("states", {}))
+    states = {r: rnd.get("states", {}).get(r, "absent") for r in want}
+    bad = {r: s for r, s in states.items() if s != "green"}
+    if not bad:
+        return f"LOCAL-REVIEW: PASS ({', '.join(want)})"
+    return "LOCAL-REVIEW: FAIL (" + ", ".join(f"{r}: {s}" for r, s in bad.items()) + ")"
+
+
 def fetch_thread_replies(repo, pr):
     """Gather author replies on the per-rubric review threads from GitHub, keyed by rubric, so a
     re-review audits the author's contest rather than re-judging the diff blind. A thread root
@@ -492,6 +534,12 @@ def main():
                          "repeatable. Same motivation as --roadmap-dir; ignored with --no-upstream.")
     ap.add_argument("--repo-dir", default="",
                     help="path to a EpsilonEridaniReview checkout (default: auto-detect / cached clone)")
+    ap.add_argument("--local", default="", metavar="DIR",
+                    help="review the COMMITTED HEAD of the local checkout DIR (on the PR's branch) "
+                         "against its merge base with the PR's base, instead of the PR head on "
+                         "GitHub: a pre-push check for an agent fixing the PR. Scratch store, manual "
+                         "mode; never posts, archives, syncs or coordinates. Prints a final "
+                         "`LOCAL-REVIEW: PASS|FAIL` line. Trusted operator use only")
     ap.add_argument("--workdir", default="", help="workspace dir (default: a fresh temp dir)")
     ap.add_argument("--keep", action="store_true", help="keep the workspace dir after finishing")
     ap.add_argument("--store", default="",
@@ -589,6 +637,17 @@ def main():
         die("--shadow with --no-sync archives to the cache, not <store>/outbox, so a host-side "
             "--sync-only could not drain it; a shadow arm syncs itself — drop --no-sync.")
 
+    local = pathlib.Path(a.local).resolve() if a.local else None
+    if local:
+        if a.post or a.shadow:
+            die("--local reviews an unpushed commit: it never posts and is not a shadow arm.")
+        if not (local / ".git").exists():
+            die(f"--local {a.local}: not a git checkout")
+        # A pre-push check must not touch shared review state: no ledger, no archive record, no
+        # in-progress marker on the PR, and every requested rubric runs (no block halt).
+        a.no_archive = a.no_sync = a.no_coordinate = a.fresh = True
+        a.mode = "manual"
+
     need("git", "Install git.")
     need("gh", "Install the GitHub CLI and run `gh auth login`.")
     want = [p.strip() for p in a.reviewer.split(",") if p.strip()] if a.reviewer else []
@@ -651,8 +710,17 @@ def main():
     # PR head, base, diff, and description (author-provided context, no more trusted than the
     # diff). The base/merge-base SHAs are provenance: they pin exactly which diff was reviewed.
     head, base = pr_ref_oids(a.repo, a.pr)
-    print(f"PR #{a.pr} head: {head[:12]}", file=sys.stderr)
-    if a.expect_head and not (head.startswith(a.expect_head) or a.expect_head.startswith(head)):
+    if local:
+        head = run(["git", "-C", str(local), "rev-parse", "HEAD"], capture=True, quiet=True).stdout.strip()
+        dirty = run(["git", "-C", str(local), "status", "--porcelain", "--untracked-files=no"],
+                    capture=True, quiet=True).stdout.strip()
+        if dirty:
+            print("note: --local reviews the committed HEAD; uncommitted changes are not part of it.",
+                  file=sys.stderr)
+        print(f"PR #{a.pr} local head: {head[:12]} (not pushed; reviewed from {local})", file=sys.stderr)
+    else:
+        print(f"PR #{a.pr} head: {head[:12]}", file=sys.stderr)
+    if a.expect_head and not local and not (head.startswith(a.expect_head) or a.expect_head.startswith(head)):
         die(f"PR #{a.pr} head is {head[:12]}, expected {a.expect_head[:12]}. The push may not have "
             "propagated to the API yet; re-run in a moment to avoid reviewing a stale commit.")
 
@@ -673,12 +741,15 @@ def main():
     # (casefile.patch_digest) to decide whether an approval carries to a new head, so every path
     # must produce it identically. The helper ships beside this file, so a --rubrics-sha pin to an
     # older engine still gets it.
-    merge_base = merge_base_sha(a.repo, base, head)
+    if local:
+        merge_base = local_merge_base(local, a.repo, base, head)
+    else:
+        merge_base = merge_base_sha(a.repo, base, head)
     if not merge_base:
         # The merge gate matches a scoreboard to the merge base it records; a review without one
         # could never merge, so stop before spending anything on it.
         die(f"could not resolve the merge base of PR #{a.pr} ({base[:12]}...{head[:12]})")
-    diff = subprocess.run(
+    diff = local_diff(local, merge_base, head, work) if local else subprocess.run(
         [sys.executable, str(pathlib.Path(__file__).resolve().parent / "pr_diff.py"),
          "--repo", a.repo, "--pr", str(a.pr), "--head-sha", head,
          "--merge-base-sha", merge_base, "--out", str(work / "diff.txt"),
@@ -690,6 +761,8 @@ def main():
     # just leaves it blank, and the engine then injects nothing).
     ci_build = ""
     try:
+        if local:
+            raise LookupError("an unpushed commit has no CI result")
         build_meta = gh_json(a.repo, a.pr, "headRefOid,statusCheckRollup")
         ci_build = ci_build_status(build_meta, head)
     except Exception:
@@ -699,10 +772,15 @@ def main():
         f"# {meta.get('title','')}\n\n{meta.get('body','') or ''}\n")
 
     # Reviewer workspace: PR source at head, roadmap, optional upstream sources. No .git, no creds.
-    run(["git", "clone", "-q", "--depth", "1", f"https://github.com/{a.repo}",
-         str(work / "code")])
-    run(["git", "-C", str(work / "code"), "fetch", "-q", "--depth", "1", "origin", head], quiet=True)
-    run(["git", "-C", str(work / "code"), "checkout", "-q", head], quiet=True)
+    if local:
+        # The commit exists only in DIR: clone it from there (no network), at exactly `head`.
+        run(["git", "clone", "-q", "--no-checkout", str(local), str(work / "code")], quiet=True)
+        run(["git", "-C", str(work / "code"), "checkout", "-q", head], quiet=True)
+    else:
+        run(["git", "clone", "-q", "--depth", "1", f"https://github.com/{a.repo}",
+             str(work / "code")])
+        run(["git", "-C", str(work / "code"), "fetch", "-q", "--depth", "1", "origin", head], quiet=True)
+        run(["git", "-C", str(work / "code"), "checkout", "-q", head], quiet=True)
     shutil.rmtree(work / "code" / ".git", ignore_errors=True)
     if a.roadmap_dir:   # pre-staged (e.g. mounted into a network-restricted bubble); copy, don't clone
         stage_tree(a.roadmap_dir, work / "roadmap")
@@ -720,6 +798,13 @@ def main():
         manifest = work / "code" / "lake-manifest.json"
         deps = direct_dependencies(manifest.read_text()) if manifest.is_file() else []
         staged = {}
+        if local:
+            # The checkout already has every dependency's source under .lake/packages at the pins
+            # being reviewed; stage those rather than fetching them again.
+            for dep in deps:
+                pkg = local / ".lake" / "packages" / dep["name"]
+                if pkg.is_dir():
+                    staged[dep["name"]] = str(pkg)
         for spec in a.upstream_dir:
             name, _, path = spec.partition("=")
             if not name or not path:
@@ -834,7 +919,9 @@ def main():
         print(t.read_text())
     print("=" * 72 + "\n")
 
-    if a.shadow:
+    if local:
+        print(local_verdict_line(store, a.pr, a.rubrics))
+    elif a.shadow:
         print(f"shadow arm `{a.label}` complete — archived, nothing posted.", file=sys.stderr)
     elif a.post:
         if not plan.is_file():
