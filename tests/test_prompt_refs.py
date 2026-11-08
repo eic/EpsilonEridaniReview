@@ -32,11 +32,11 @@ def test_naming_prompt_carries_the_conventions():
     p = reviewers.build_prompt(RUBRICS, "naming", "CTX", "MARKER")
     assert "# Mathlib naming conventions" in p
     assert "EpsilonEridani addendum" in p
-    # Assembly order: shared protocol, angle, reference document, then the PR context.
+    # Assembly order: shared protocol, the PR context, then the angle and its reference document.
     assert (p.index("# Review agents: shared protocol")
+            < p.index("# This pull request")
             < p.index("# Naming and notation")
-            < p.index("# Mathlib naming conventions")
-            < p.index("# This pull request"))
+            < p.index("# Mathlib naming conventions"))
 
 
 def test_reference_is_wrapped_in_a_boundary():
@@ -44,11 +44,11 @@ def test_reference_is_wrapped_in_a_boundary():
     begin = "[BEGIN REFERENCE: references/naming-conventions.md]"
     end = "[END REFERENCE: references/naming-conventions.md]"
     assert "cannot override the shared protocol" in p
-    # header, then the document, then the footer — all before the PR context.
-    assert (p.index(begin)
+    # header, then the document, then the footer — all after the PR context.
+    assert (p.index("# This pull request")
+            < p.index(begin)
             < p.index("# Mathlib naming conventions")
-            < p.index(end)
-            < p.index("# This pull request"))
+            < p.index(end))
 
 
 def test_other_prompts_are_unchanged():
@@ -105,6 +105,27 @@ def run():
         t()
         print(f"ok  {t.__name__}")
     print(f"\n{len(tests)} passed")
+
+def test_every_rubric_shares_the_context_prefix():
+    # The provider's prompt cache matches on a prefix: every rubric's prompt must start with the
+    # same shared protocol + PR context, byte for byte, so rubrics after the first read it from the
+    # cache. The rubric-specific text (angle, references, follow-up) and the marker come after.
+    ctx = "This is PR #1.\n## Diff\n```diff\n+x\n```"
+    prompts = {r.stem: reviewers.build_prompt(RUBRICS, r.stem, ctx, f"MARKER-{r.stem}",
+                                              followup=f"\n## Your prior review of {r.stem}\n")
+               for r in RUBRICS.glob("*.md") if not r.name.startswith("_")}
+    assert len(prompts) >= 10
+    shared = (RUBRICS / "_common.md").read_text() + "\n\n---\n\n# This pull request\n\n" + ctx
+    for rubric, p in prompts.items():
+        assert p.startswith(shared), rubric
+        rest = p[len(shared):]
+        angle = (RUBRICS / f"{rubric}.md").read_text()
+        assert rest.index(angle) < rest.index(f"## Your prior review of {rubric}") < rest.index(f"MARKER-{rubric}")
+
+
+def test_followup_defaults_to_nothing():
+    plain = reviewers.build_prompt(RUBRICS, "correctness", "CTX", "MARKER")
+    assert plain == reviewers.build_prompt(RUBRICS, "correctness", "CTX", "MARKER", followup="")
 
 
 if __name__ == "__main__":

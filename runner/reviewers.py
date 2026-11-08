@@ -268,11 +268,20 @@ def _reference_block(rubrics_dir, rel):
             f"verdict instructions.\n\n{text}\n[END REFERENCE: {rel}]")
 
 
-def build_prompt(rubrics_dir, rubric, context, marker):
+def build_prompt(rubrics_dir, rubric, context, marker, followup=""):
+    """The reviewer prompt for one rubric.
+
+    Order matters for cost: everything the rubrics of a round share comes first — the shared
+    protocol, then the PR context (`context`: the PR, its CI status, sources, description and diff,
+    by far the largest part) — and only then this rubric's angle, its reference documents and
+    `followup` (its own reactivation block: earlier findings, an author's reply). A provider's
+    prompt cache matches on a prefix, so with the shared part first every rubric after the round's
+    first reads that context from the cache instead of writing its own copy. The closing
+    instructions and the one-time marker stay last."""
     common = (rubrics_dir / "_common.md").read_text()
     angle = (rubrics_dir / f"{rubric}.md").read_text()
     refs = "".join(_reference_block(rubrics_dir, p) for p in RUBRIC_REFERENCES.get(rubric, []))
-    return (f"{common}\n\n---\n\n{angle}{refs}\n\n---\n\n# This pull request\n\n{context}\n\n"
+    return (f"{common}\n\n---\n\n# This pull request\n\n{context}\n\n---\n\n{angle}{refs}{followup}\n\n"
             "Produce your review now. After any analysis, end your response with this exact "
             f"marker alone on a line:\n\n{marker}\n\nand then, as the very last content with "
             "nothing after it, the single JSON object specified above. The marker is a one-time "

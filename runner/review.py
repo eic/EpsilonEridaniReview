@@ -10,6 +10,7 @@ rubrics whose last round was not `approve`. The workflow commits the store after
 """
 
 import argparse, datetime, hashlib, json, os, pathlib, random, re, secrets, sys, time
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 
 import archive
 from dataclasses import dataclass, field
@@ -128,7 +129,7 @@ def error_kind(res):
     return "no_verdict"  # the CLI exited 0 but emitted nothing this runner could parse
 
 
-def abort_provider_down(ctx):
+def abort_provider_down(ctx, kind=None):
     """End the round without publishing, because the provider cannot serve any rubric.
 
     A provider failure says nothing about the code, so it must not become a review. Before this,
@@ -145,11 +146,13 @@ def abort_provider_down(ctx):
     marker is cleared for the same reason: there is no publication to repair.
 
     Exits PROVIDER_DOWN_EXIT so the caller can say which provider is down rather than reporting a
-    generic non-zero engine failure."""
+    generic non-zero engine failure. `kind` is the outage as diagnosed when it was detected: in a
+    parallel batch a rubric that was already in flight can still succeed and reset the streak
+    before the round gets here, without making the diagnosis any less true."""
     ctx.pr_state.pop("pending_publication_head_sha", None)
     if not ctx.a.dry_run:
         ctx.ledger.persist()
-    kind = ctx.down_kind()
+    kind = kind or ctx.down_kind()
     print(
         f"\nAborting after {len(ctx.ran)} rubric(s): no scoreboard was rendered and nothing was "
         f"posted to #{ctx.a.pr}. The rubrics that errored re-run on the next round.",
@@ -347,40 +350,69 @@ class RunContext:
         return kinds.pop() if len(kinds) == 1 else "provider_unavailable"
 
 
+# How many rubrics run at once after the lead rubric (see run_rubrics). Reviewers are independent
+# read-only processes, so the round's wall time is its slowest rubric rather than the sum of all of
+# them; the cap keeps a subscription's concurrent sessions and its rate limit in a sane range.
+DEFAULT_REVIEW_JOBS = 5
+
+
+@dataclass
+class RubricJob:
+    """One rubric's dispatch: what prepare_rubric decided on the main thread, plus what the reviewer
+    call produced. dispatch_rubric fills the result fields in a worker thread and touches nothing
+    else; fold_rubric folds it back into the shared run state on the main thread."""
+    rubric: str
+    marker: str
+    reblock: str
+    is_reply: bool
+    prompt: str
+    provider: str
+    fn: object
+    model: str
+    started_at: str = ""
+    t0: float = 0.0
+    res: dict = field(default_factory=dict)
+    attempts: list = field(default_factory=list)
+    requested: str = ""
+    downgraded: bool = False
+
+
 def run_rubric(ctx, rubric):
     """Review one rubric: build the prompt, dispatch the (pinned or drawn) reviewer with one retry,
     parse the verdict from behind the one-time marker, archive + persist, and fold into the case
     file. Bills every attempt and writes the ledger incrementally so a crash never loses spend.
-    Formerly main()'s run_one closure; the captured state now travels in ctx."""
+    Formerly main()'s run_one closure; the captured state now travels in ctx. The three stages are
+    separate so run_rubrics can run the reviewer calls in parallel while every write to shared
+    state stays on the main thread."""
+    fold_rubric(ctx, dispatch_rubric(ctx, prepare_rubric(ctx, rubric)))
+
+
+def prepare_rubric(ctx, rubric):
+    """Main thread: everything that reads the run's shared state — the case file, the reply, the
+    provider pin, the runner registry — decided before the reviewer call starts."""
     a = ctx.a
-    state_map = ctx.state_map
-    reply_text = ctx.reply_text
-    base_context = ctx.base_context
-    head = ctx.head
-    providers = ctx.providers
-    runners = ctx.runners
-    keys = ctx.keys
-    subscription = ctx.subscription
-    rubrics_version = ctx.rubrics_version
-    round_num = ctx.round_num
-    prov = ctx.prov
-    diff_full = ctx.diff_full
-    outdir = ctx.outdir
-    day = ctx.day
-    ran = ctx.ran
-    run_results = ctx.run_results
-    spent_today = ctx.spent_today
-    cf_prev = state_map.get(rubric)
+    cf_prev = ctx.state_map.get(rubric)
     marker = "EPSILONERIDANI-VERDICT-" + secrets.token_hex(12)  # one-time, unforgeable channel
     is_reply = (a.mode == "reply" and rubric == a.reply_rubric)
-    reblock = build_reactivation_block(cf_prev, reply_text if is_reply else None)
-    prompt = build_prompt(pathlib.Path(a.rubrics_dir), rubric, base_context + reblock, marker)
+    reblock = build_reactivation_block(cf_prev, ctx.reply_text if is_reply else None)
+    prompt = build_prompt(pathlib.Path(a.rubrics_dir), rubric, ctx.base_context, marker,
+                          followup=reblock)
     # Pin the provider to whoever first reviewed this rubric, so a follow-up audits its own
     # prior finding (and an author can't shop for a softer model); else roll at random over
     # the available providers. A pinned provider that is no longer available is re-drawn.
-    provider = (cf_prev.get("provider") if cf_prev and cf_prev.get("provider") in providers
-                else random.choice(providers))
-    fn, model = runners[provider]
+    provider = (cf_prev.get("provider") if cf_prev and cf_prev.get("provider") in ctx.providers
+                else random.choice(ctx.providers))
+    fn, model = ctx.runners[provider]
+    return RubricJob(rubric=rubric, marker=marker, reblock=reblock, is_reply=is_reply,
+                     prompt=prompt, provider=provider, fn=fn, model=model)
+
+
+def dispatch_rubric(ctx, job):
+    """Worker thread: the reviewer call and its retries. Reads ctx.a, ctx.keys and ctx.subscription
+    (never written during a round) and writes only `job`."""
+    a = ctx.a
+    prompt, provider, fn, model, marker = job.prompt, job.provider, job.fn, job.model, job.marker
+    keys, subscription = ctx.keys, ctx.subscription
     started_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     attempts, t0 = [], time.monotonic()
 
@@ -433,14 +465,42 @@ def run_rubric(ctx, rubric):
         res = attempt()  # the ordinary one retry (unchanged for every non-codex-downgrade case)
         cost += res.get("cost_usd") or 0.0  # count every attempt
     res["cost_usd"] = round(cost, 6)
+    job.started_at, job.t0, job.res, job.attempts = started_at, t0, res, attempts
+    job.requested, job.downgraded, job.model = requested, downgraded and has_verdict(res), model
+    job.res["duration_s"] = round(time.monotonic() - t0, 1)
+    return job
+
+
+def fold_rubric(ctx, job):
+    """Main thread: fold one finished rubric into the run — archive, case file, ledger, the printed
+    line and the provider-down streak. Rubrics fold one at a time, so nothing here needs a lock."""
+    a = ctx.a
+    state_map = ctx.state_map
+    reply_text = ctx.reply_text
+    head = ctx.head
+    runners = ctx.runners
+    rubrics_version = ctx.rubrics_version
+    round_num = ctx.round_num
+    prov = ctx.prov
+    diff_full = ctx.diff_full
+    outdir = ctx.outdir
+    day = ctx.day
+    ran = ctx.ran
+    run_results = ctx.run_results
+    spent_today = ctx.spent_today
+    rubric, provider, fn, model, marker = job.rubric, job.provider, job.fn, job.model, job.marker
+    reblock, is_reply, prompt = job.reblock, job.is_reply, job.prompt
+    started_at, attempts, res = job.started_at, job.attempts, job.res
+    cost = res.get("cost_usd") or 0.0
     # Persist the downgrade for the rest of the run — flip the shared runner registry so later rubrics
     # skip the now-known-dead Sol call — but ONLY once the fallback has actually produced a verdict. With
-    # the reconfirm above, that means: rejected twice on the default AND the fallback then worked. Runs
-    # dispatch rubrics sequentially, so the mutation races nothing; the registry is rebuilt from
+    # the reconfirm above, that means: rejected twice on the default AND the fallback then worked. Only
+    # the main thread writes the registry, and only here; rubrics already in flight keep the model they
+    # were prepared with and may each find Sol unavailable on their own. The registry is rebuilt from
     # CODEX_MODEL every run, so Sol is re-probed next run. (require_priced covers the fallback, so this
     # never routes to an unpriced model.)
-    if downgraded and has_verdict(res):
-        print(f"[{rubric}] codex model {requested} unavailable to this account — using {model} for "
+    if job.downgraded:
+        print(f"[{rubric}] codex model {job.requested} unavailable to this account — using {model} for "
               f"the rest of this run", file=sys.stderr)
         runners[provider] = (fn, model)
     # A stable per-execution id: readable prefix + a short hash of the identifying fields.
@@ -450,7 +510,7 @@ def run_rubric(ctx, rubric):
     res.update(provider=provider, model=model, rubric=rubric,
                run_id=(f"r-{started_at.translate(str.maketrans('', '', '-:'))}"
                        f"-{a.pr}-{rubric}-{rid}"),
-               started_at=started_at, duration_s=round(time.monotonic() - t0, 1),
+               started_at=started_at, duration_s=res["duration_s"],
                attempts=attempts,
                prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest(),
                verdict_obj=extract_verdict(res.get("text", ""), marker))
@@ -558,6 +618,74 @@ def run_rubric(ctx, rubric):
         ctx.note_provider_down(provider, None, 0)
 
 
+def run_rubrics(ctx, todo, *, halt_on_block):
+    """Run `todo` and return (stopped, halted): the first rubric the daily budget deferred, and the
+    rubric whose `block` verdict halted the batch (each None when that did not happen).
+
+    The first rubric runs alone. It is the block-likeliest one (DEFAULT_RUBRICS puts the
+    block-capable angles first), so a block still halts the round before anything else is spent,
+    and its prompt warms the provider's cache for the shared prefix every other rubric's prompt
+    starts with (build_prompt puts the PR context ahead of the rubric). The rest then run up to
+    `--jobs` at a time, and the batch takes as long as its slowest rubric instead of the sum.
+
+    What the sequential loop guaranteed still holds, launch by launch:
+      * budget: a rubric starts only if today's spend plus `--max-call-cost` for it AND for every
+        rubric still in flight fits the daily budget; when it does not and nothing is in flight,
+        it is `stopped` and it and the rest stay deferred;
+      * block: once a rubric blocks (and `halt_on_block`), nothing new starts; rubrics already in
+        flight finish and fold, because their spend is real and their verdicts are on this head;
+      * provider down: once every provider is down, nothing new starts; the rubrics in flight
+        finish and fold, so their spend reaches the ledger, and then the round aborts.
+    """
+    a = ctx.a
+    pending = list(todo)
+    stopped = halted = None
+    if not pending:
+        return stopped, halted
+
+    def blocks(rubric):
+        return halt_on_block and state_of(ctx.state_map.get(rubric), ctx.head) == "blocking_block"
+
+    lead = pending.pop(0)
+    if ctx.spent_today + a.max_call_cost > a.daily_budget:
+        return lead, None
+    run_rubric(ctx, lead)
+    if ctx.provider_is_down():
+        abort_provider_down(ctx)
+    if blocks(lead):
+        return None, lead
+
+    jobs = max(1, a.jobs)
+    down = None   # the outage kind, captured when it is diagnosed (see abort_provider_down)
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        inflight = {}
+        while pending or inflight:
+            while pending and len(inflight) < jobs and not halted and down is None:
+                if ctx.spent_today + (len(inflight) + 1) * a.max_call_cost > a.daily_budget:
+                    if not inflight:
+                        stopped = pending[0]
+                    break   # wait for spend to settle; re-checked once something folds
+                rubric = pending.pop(0)
+                inflight[pool.submit(dispatch_rubric, ctx, prepare_rubric(ctx, rubric))] = rubric
+            if stopped or not inflight:
+                break
+            done, _ = wait(inflight, return_when=FIRST_COMPLETED)
+            # Fold in queue order within a batch of simultaneous finishes, so the printed lines and
+            # `ran` stay deterministic for a given set of completions.
+            for fut in sorted(done, key=lambda f: todo.index(inflight[f])):
+                rubric = inflight.pop(fut)
+                fold_rubric(ctx, fut.result())
+                if down is None and ctx.provider_is_down():
+                    down = ctx.down_kind()
+                if halted is None and blocks(rubric):
+                    halted = rubric
+            if (halted or down is not None) and not inflight:
+                break
+    if down is not None:
+        abort_provider_down(ctx, down)
+    return stopped, halted
+
+
 def changed_file_paths(a, diff_full):
     """The PR's changed paths: machine-read from --paths-file (exact for names git quotes in patch
     headers), else parsed from the diff, which skips those names."""
@@ -619,6 +747,10 @@ def main():
                          "author's stated intent (untrusted, like the diff)")
     ap.add_argument("--store", required=True, help="checkout of the reviews branch (ledger + logs)")
     ap.add_argument("--daily-budget", type=float, default=5.0)
+    ap.add_argument("--jobs", type=int,
+                    default=int(os.environ.get("EPSILONERIDANI_REVIEW_JOBS") or DEFAULT_REVIEW_JOBS),
+                    help="rubrics reviewed at once after the lead rubric, which runs alone "
+                         f"(default: $EPSILONERIDANI_REVIEW_JOBS or {DEFAULT_REVIEW_JOBS}; 1 = sequential)")
     ap.add_argument("--max-call-cost", type=float, default=1.0,
                     help="reservation per rubric: skip a rubric if spend so far plus this would "
                          "exceed the daily budget (a hard-ish per-call ceiling, not post-spend)")
@@ -1036,21 +1168,13 @@ def main():
                      prov=prov, diff_full=diff_full, outdir=outdir, day=day, ledger=led,
                      spent_today=spent_today, codex_model_explicit=a.codex_model is not None)
 
-    # Phase 1: the queued rubrics. Reserve before spending so a call can't breach the cap.
+    # Phase 1: the queued rubrics, the lead alone and then in parallel (run_rubrics). Reserve
+    # before spending so a call can't breach the cap.
     # A `block` verdict halts the round: blocked code gets reworked or abandoned, and approvals
     # bought on this commit go stale at the fix push anyway, so reviewing the remaining rubrics
     # now is spend with nothing kept. They stay `absent` and queue again once the block clears.
     # Manual mode is exempt: a human's /review forces the full picture, block or not.
-    for rubric in queue:
-        if ctx.spent_today + a.max_call_cost > a.daily_budget:
-            stopped = rubric
-            break
-        run_rubric(ctx, rubric)
-        if ctx.provider_is_down():
-            abort_provider_down(ctx)
-        if a.mode != "manual" and state_of(state_map.get(rubric), head) == "blocking_block":
-            halted = rubric
-            break
+    stopped, halted = run_rubrics(ctx, queue, halt_on_block=a.mode != "manual")
 
     # Phase 2: once no rubric holds an adverse verdict, run what is not yet judged on HEAD —
     # never-run rubrics (deferred by an earlier block halt) and stale greens. A reply that
@@ -1062,16 +1186,7 @@ def main():
                     if state_of(state_map.get(r), head) in ("absent", "stale")]
             if not todo:
                 break
-            for rubric in todo:
-                if ctx.spent_today + a.max_call_cost > a.daily_budget:
-                    stopped = rubric
-                    break
-                run_rubric(ctx, rubric)
-                if ctx.provider_is_down():
-                    abort_provider_down(ctx)
-                if state_of(state_map.get(rubric), head) == "blocking_block":
-                    halted = rubric
-                    break
+            stopped, halted = run_rubrics(ctx, todo, halt_on_block=True)
             if stopped or halted:
                 break
 
