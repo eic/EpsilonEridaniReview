@@ -232,10 +232,18 @@ def rubrics_repo_sha(repo_dir):
 
 
 def local_merge_base(local, repo, base, head):
-    """The merge base of the PR's base commit and the local `head`. The base commit lives in the
-    upstream repo (a fork checkout's `origin` may not have it), so fetch it by SHA from there."""
-    run(["git", "-C", str(local), "fetch", "-q", f"https://github.com/{repo}", base],
-        quiet=True, allow_fail=True)
+    """The merge base of the PR's base commit and the local `head`. No fetch when the checkout
+    already has the base; otherwise by SHA from the upstream repo (a fork checkout's `origin` may
+    not have it), then from the checkout's own `origin` (its configured, possibly authenticated,
+    remote). An empty answer stops the run before anything is spent."""
+    def have(sha):
+        return run(["git", "-C", str(local), "cat-file", "-e", f"{sha}^{{commit}}"],
+                   capture=True, quiet=True, allow_fail=True).returncode == 0
+
+    for source in (f"https://github.com/{repo}", "origin"):
+        if have(base):
+            break
+        run(["git", "-C", str(local), "fetch", "-q", source, base], capture=True, quiet=True, allow_fail=True)
     r = run(["git", "-C", str(local), "merge-base", base, head], capture=True, quiet=True, allow_fail=True)
     return r.stdout.strip() if r.returncode == 0 else ""
 
@@ -253,7 +261,8 @@ def local_diff(local, merge_base, head, work):
     (work / "diff.txt").write_bytes(d.stdout)
     pz = subprocess.run([*git, "diff", "--no-renames", "--name-only", "-z", merge_base, head],
                         capture_output=True)
-    (work / "paths.z").write_bytes(pz.stdout)
+    if pz.returncode == 0:
+        (work / "paths.z").write_bytes(pz.stdout)
     return pz
 
 
@@ -265,8 +274,12 @@ def local_verdict_line(store, pr, rubrics):
         rnd = led["prs"][str(pr)]["rounds"][-1]
     except (OSError, KeyError, IndexError, ValueError):
         return "LOCAL-REVIEW: FAIL (no verdicts were recorded; see the log above)"
-    want = [r.strip() for r in rubrics.split(",") if r.strip()] or list(rnd.get("states", {}))
-    states = {r: rnd.get("states", {}).get(r, "absent") for r in want}
+    recorded = rnd.get("states") or {}
+    want = [r.strip() for r in rubrics.split(",") if r.strip()] or list(recorded)
+    if not want or not recorded:
+        # Nothing judged is not a pass: an agent reading PASS would push an unreviewed fix.
+        return "LOCAL-REVIEW: FAIL (no rubric verdicts were recorded; see the log above)"
+    states = {r: recorded.get(r, "absent") for r in want}
     bad = {r: s for r, s in states.items() if s != "green"}
     if not bad:
         return f"LOCAL-REVIEW: PASS ({', '.join(want)})"
@@ -799,8 +812,9 @@ def main():
         deps = direct_dependencies(manifest.read_text()) if manifest.is_file() else []
         staged = {}
         if local:
-            # The checkout already has every dependency's source under .lake/packages at the pins
-            # being reviewed; stage those rather than fetching them again.
+            # The checkout normally has every dependency's source under .lake/packages at the pins
+            # being reviewed: stage those instead of fetching. A dependency missing there (say, a
+            # checkout that never ran `lake exe cache get`) is fetched below as in a normal run.
             for dep in deps:
                 pkg = local / ".lake" / "packages" / dep["name"]
                 if pkg.is_dir():

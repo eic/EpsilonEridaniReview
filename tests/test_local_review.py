@@ -49,6 +49,12 @@ def make_repo(root):
     git(repo, "config", "user.name", "t")
     (repo / "EpsilonEridani").mkdir()
     (repo / "EpsilonEridani" / "A.lean").write_text("theorem a : True := trivial\n")
+    (repo / "lake-manifest.json").write_text(json.dumps({"packages": [
+        {"name": "Staged", "url": "https://example.invalid/Staged", "rev": "a" * 40, "inherited": False},
+        {"name": "Missing", "url": "https://example.invalid/Missing", "rev": "b" * 40, "inherited": False}]}))
+    (repo / ".gitignore").write_text("/.lake\n")
+    (repo / ".lake" / "packages" / "Staged").mkdir(parents=True)
+    (repo / ".lake" / "packages" / "Staged" / "Lemma.lean").write_text("theorem staged : True := trivial\n")
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "base")
     base = git(repo, "rev-parse", "HEAD")
@@ -59,7 +65,7 @@ def make_repo(root):
 
 def drive(argv, states):
     """Run cli.main() with GitHub and the engine stubbed; return (engine_cmd, stdout, work)."""
-    seen = {"engine": None, "coordinated": False}
+    seen = {"engine": None, "coordinated": False, "fetches": []}
     real_run = cli.run
 
     def fake_run(cmd, **kw):
@@ -70,12 +76,17 @@ def drive(argv, states):
             seen["work"] = work
             seen["diff"] = (work / "diff.txt").read_text()
             seen["code"] = (work / "code" / "EpsilonEridani" / "A.lean").read_text()
+            staged = work / "upstream" / "Staged" / "Lemma.lean"
+            seen["staged"] = staged.read_text() if staged.is_file() else None
             (store / "ledger.json").write_text(json.dumps(
                 {"days": {}, "prs": {"7": {"rounds": [{"states": states}]}}}))
             (work / "scoreboard.md").write_text("scoreboard\n")
             return subprocess.CompletedProcess(cmd, 0, "", "")
-        if "fetch" in cmd and any("github.com" in str(c) for c in cmd):
-            return subprocess.CompletedProcess(cmd, 0, "", "")   # the base is already local here
+        if "fetch" in cmd:
+            seen["fetches"].append(" ".join(map(str, cmd)))
+            return subprocess.CompletedProcess(cmd, 0, "", "")   # never the network in a test
+        if "checkout" in cmd and "FETCH_HEAD" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, "", "")   # what the stubbed fetch "fetched"
         if cmd[:2] == ["gh", "api"] and "user" in cmd:
             return subprocess.CompletedProcess(cmd, 0, "tester\n", "")
         return real_run(cmd, **kw)
@@ -145,6 +156,21 @@ def main():
     _, out, _ = drive(common, {"correctness": "green", "reuse": "blocking_request"})
     check("FAIL names the rest", out.strip().endswith("LOCAL-REVIEW: FAIL (reuse: blocking_request)"),
           out.strip().splitlines()[-1:])
+
+    check("no fetch for a base the checkout has", not any("github.com" in f for f in seen["fetches"]), seen["fetches"])
+    _, out, _ = drive(common, {})
+    check("no recorded verdict is a FAIL, never a PASS",
+          out.strip().endswith("LOCAL-REVIEW: FAIL (no rubric verdicts were recorded; see the log above)"),
+          out.strip().splitlines()[-1:])
+
+    print("4b) upstream sources from .lake/packages")
+    upstream = [a for a in common if a != "--no-upstream"]
+    seen, out, _ = drive(upstream, {"correctness": "green", "reuse": "green"})
+    cmd = seen["engine"] or []
+    check("the staged dependency is passed to the engine", "Staged=upstream/Staged" in cmd, cmd[-6:])
+    check("its source came from the checkout", seen.get("staged") == "theorem staged : True := trivial\n")
+    check("no fetch for the staged dependency", not any("Staged" in f for f in seen["fetches"]), seen["fetches"])
+    check("a dependency missing there is fetched as usual", any("Missing" in f for f in seen["fetches"]), seen["fetches"])
 
     print("5) never posts")
     _, _, code = drive([*common, "--post"], {})
