@@ -150,8 +150,14 @@ def main():
           "authentication" in review._PROVIDER_DOWN_PHRASE["not_authenticated"])
 
     # --- 6) the phase loops consult it, and the CLI agrees on the status ------------------------
-    calls = re.findall(r"(?<!def )abort_provider_down\(ctx\)", src)  # exclude the definition itself
-    check("both phase loops break out", len(calls) == 2)
+    # Both phase loops go through run_rubrics, which aborts after the lead rubric and, once the
+    # rubrics in flight have folded, after the parallel batch with the kind captured at detection
+    # (tests/test_parallel_rubrics.py drives that end to end).
+    batch = src[src.index("def run_rubrics("):src.index("def changed_file_paths(")]
+    calls = re.findall(r"abort_provider_down\(ctx(?:, down)?\)", batch)
+    check("the lead and the batch both abort", len(calls) == 2)
+    check("the batch aborts with the captured kind", "abort_provider_down(ctx, down)" in batch)
+    check("both phase loops go through run_rubrics", len(re.findall(r"= run_rubrics\(ctx, ", src)) == 2)
     cli = (pathlib.Path(review.__file__).parent / "cli.py").read_text()
     m = re.search(r"^PROVIDER_DOWN_EXIT = (\d+)$", cli, re.M)
     check("cli.py defines the same exit status", bool(m) and int(m.group(1)) == review.PROVIDER_DOWN_EXIT)
