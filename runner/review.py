@@ -126,15 +126,17 @@ def error_kind(res):
     for kind, pattern in _ERROR_KINDS:
         if pattern.search(hay):
             return kind
-    # A structured status the CLI attached to a failed run (claude's `error_status`, codex's parsed
-    # one) still names the outage when the prose is new: the "5-hour limit" runs above all carried
-    # error_status 429. Only a failed run's status counts, as for the text.
-    if _cli_reports_failure(res):
-        status = str(res.get("error_status") or "").strip()
-        if status == "429":
-            return "rate_limited"
-        if status == "401":
-            return "not_authenticated"
+    # A structured status still names the outage when the prose is new: the "5-hour limit" runs
+    # above all carried error_status 429. The status needs no separate failure gate because it IS one
+    # of the structured failure signals _cli_reports_failure accepts: the runners set it only from an
+    # API error the CLI received (claude's `api_error_status`, codex's parsed status), never from
+    # model output, so its presence means the run failed even when the CLI exited 0. A codex run can
+    # exit 0 with a 429 status (the pinned "codex structured status" case).
+    status = str(res.get("error_status") or "").strip()
+    if status == "429":
+        return "rate_limited"
+    if status == "401":
+        return "not_authenticated"
     if res.get("returncode"):
         return "unknown_error"
     return "no_verdict"  # the CLI exited 0 but emitted nothing this runner could parse

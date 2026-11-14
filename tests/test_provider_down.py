@@ -73,7 +73,10 @@ def main():
     unseen = {"returncode": 1, "text": "Something new went wrong", "is_error": True, "error_status": 429}
     check("a failed run's 429 status is rate_limited", review.error_kind(unseen) == "rate_limited")
     check("a failed run's 401 status is not_authenticated",
-          review.error_kind({**unseen, "error_status": "401"}) == "not_authenticated")
+          review.error_kind({**unseen, "error_status": 401}) == "not_authenticated")
+    # The runners store an int (claude's api_error_status, codex's parsed one); a string is read alike.
+    check("a status stored as a string is read the same",
+          review.error_kind({**unseen, "error_status": "429"}) == "rate_limited")
     check("a clean run's status is not a diagnosis",
           review.error_kind({"returncode": 0, "text": "", "is_error": False, "error_status": None}) == "no_verdict")
     check("the observed 2026-11-11 run record classifies as provider-down",
