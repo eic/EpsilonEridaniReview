@@ -63,10 +63,12 @@ def public_record(value):
 _ERROR_KINDS = (
     ("not_authenticated", re.compile(r"not logged in|/login|invalid authentication|unauthorized|401"
                                      r"|token has been revoked|failed to authenticate", re.I)),
-    # The subscription CLIs report an exhausted plan as prose, with no status code anywhere:
-    # "You've hit your session limit · resets 9:30pm (UTC)", "You've hit your weekly limit",
-    # "You've hit your monthly spend limit". Every one of those is a wait, never a review.
-    ("quota_exhausted", re.compile(r"hit your (?:session|weekly|monthly|usage)\b"
+    # The subscription CLIs report an exhausted plan as prose: "You've hit your session limit ·
+    # resets 9:30pm (UTC)", "You've hit your weekly limit", "You've hit your monthly spend limit",
+    # and since 2026-11 "You've hit your 5-hour limit · resets 12pm". Every one of those is a wait,
+    # never a review. Match the shape ("hit your <a few words> limit"), not a list of window names:
+    # the list missed "5-hour", and 325 rubric runs on 2026-11-11 were posted as `error` rows.
+    ("quota_exhausted", re.compile(r"hit your [\w -]{1,40}?\blimit\b"
                                    r"|usage limit reached|spend limit", re.I)),
     ("rate_limited", re.compile(r"rate limit|too many requests|429", re.I)),
     ("overloaded", re.compile(r"overloaded|service unavailable|\b(?:502|503|529)\b", re.I)),
@@ -124,6 +126,15 @@ def error_kind(res):
     for kind, pattern in _ERROR_KINDS:
         if pattern.search(hay):
             return kind
+    # A structured status the CLI attached to a failed run (claude's `error_status`, codex's parsed
+    # one) still names the outage when the prose is new: the "5-hour limit" runs above all carried
+    # error_status 429. Only a failed run's status counts, as for the text.
+    if _cli_reports_failure(res):
+        status = str(res.get("error_status") or "").strip()
+        if status == "429":
+            return "rate_limited"
+        if status == "401":
+            return "not_authenticated"
     if res.get("returncode"):
         return "unknown_error"
     return "no_verdict"  # the CLI exited 0 but emitted nothing this runner could parse
