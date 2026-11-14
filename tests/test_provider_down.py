@@ -55,6 +55,9 @@ def main():
         "You've hit your session limit · resets 9:30pm (UTC)": "quota_exhausted",
         "You've hit your weekly limit · resets 3am (UTC)": "quota_exhausted",
         "You've hit your monthly spend limit · raise it at claude.ai/settings/usage": "quota_exhausted",
+        # 2026-11-11: the window-name list missed this wording, and 325 runs posted as `error`.
+        "You've hit your 5-hour limit · resets 12pm (America/Winnipeg)": "quota_exhausted",
+        "You've hit your usage limit": "quota_exhausted",
     }
     for text, want in observed.items():
         got = review.error_kind(res(text=text))
@@ -66,6 +69,20 @@ def main():
           == "not_authenticated")
     check("an unclassifiable failure is unknown_error", review.error_kind(res(text="???")) == "unknown_error")
     check("a clean exit with no verdict is no_verdict", review.error_kind(res(rc=0)) == "no_verdict")
+    # A failed run's structured status names the outage when its prose is new.
+    unseen = {"returncode": 1, "text": "Something new went wrong", "is_error": True, "error_status": 429}
+    check("a failed run's 429 status is rate_limited", review.error_kind(unseen) == "rate_limited")
+    check("a failed run's 401 status is not_authenticated",
+          review.error_kind({**unseen, "error_status": "401"}) == "not_authenticated")
+    check("a clean run's status is not a diagnosis",
+          review.error_kind({"returncode": 0, "text": "", "is_error": False, "error_status": None}) == "no_verdict")
+    check("the observed 2026-11-11 run record classifies as provider-down",
+          review.error_kind({"returncode": 1, "is_error": True, "error_status": 429, "raw_stderr": "",
+                             "text": "You've hit your 5-hour limit · resets 12pm (America/Winnipeg)"})
+          in review.PROVIDER_DOWN_KINDS)
+    # Model prose that merely mentions a limit, in a run the CLI reports as successful, stays a review.
+    check("a successful review mentioning a limit is not an outage",
+          review.error_kind(res(text="Note: you've hit your recursion depth limit here", rc=0)) == "no_verdict")
 
     # A REAL review that discusses a 401 or a rate limit is not an outage, however SHORT it is.
     # Length is not a trust boundary: `text` is model output over an untrusted diff, so the gate is
