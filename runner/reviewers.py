@@ -401,6 +401,108 @@ def _tool_trace(stream_lines, root):
     return trace, meta, result
 
 
+# The worker that launched this review may name a spend journal in this variable: its Claude account's
+# `spend.jsonl` (EpsilonEridaniWorker quota.py, `record_claude_spend`). Each Claude call here appends one
+# line in that journal's format, so a review's spend and the rate-limit utilization its stream reported
+# reach the worker's pacer, which otherwise learns about them only from the usage endpoint, and that
+# answers most polls with 429. Unset (CI, a local run), nothing is written.
+SPEND_JOURNAL_ENV = "EPSILONERIDANI_CLAUDE_SPEND_JOURNAL"
+
+
+def _finite(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value) if value == value and abs(value) != float("inf") else None
+
+
+def _rate_limit_fields(info):
+    """The well-formed status, resetsAt and utilization of one rate-limit window (malformed ones are
+    dropped, so the journal never holds a value the pacer would misread)."""
+    fields = {}
+    if isinstance(info.get("status"), str) and info["status"]:
+        fields["status"] = info["status"]
+    if _finite(info.get("resetsAt")) is not None:
+        fields["resetsAt"] = info["resetsAt"]
+    used = _finite(info.get("utilization"))
+    if used is not None:
+        fields["utilization"] = used
+    return fields
+
+
+def _claude_rate_limits(stream_lines, seen):
+    """The latest rate-limit reading per window ("five_hour", "seven_day", ...) from a stream-json
+    run's `rate_limit_event`s, each stamped `seen`. Same shape as the worker's own agent journal."""
+    limits = {}
+    for line in stream_lines:
+        line = line.strip()
+        if '"rate_limit_event"' not in line or not line.startswith("{"):
+            continue
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(ev, dict) or ev.get("type") != "rate_limit_event":
+            continue
+        info = ev.get("rate_limit_info") if isinstance(ev.get("rate_limit_info"), dict) else {}
+        updates = {}
+        kind = info.get("rateLimitType")
+        if isinstance(kind, str) and kind:
+            updates[kind] = _rate_limit_fields(info)
+        windows = info.get("unifiedWindows")
+        for name, window in windows.items() if isinstance(windows, dict) else ():
+            fields = _rate_limit_fields(window) if isinstance(window, dict) else {}
+            if fields:
+                updates[str(name)] = {**updates.get(str(name), {}), **fields}
+        for name, entry in updates.items():
+            if entry:
+                limits[name] = {**entry, "seen": seen}
+    return limits
+
+
+def _journal_claude_call(stream_lines, result, returncode, started, model):
+    """Append this Claude call to the launching worker's spend journal, if it named one. Never raises:
+    the journal is telemetry and must not fail a review.
+
+    Every reading is stamped with the call's START, not the moment the stream was parsed. The
+    utilization a run reports is a lower bound for the end of the run and an upper bound for its
+    start, so dating it to the start can only make the pacer more cautious, never less."""
+    path = os.environ.get(SPEND_JOURNAL_ENV, "").strip()
+    if not path:
+        return
+    try:
+        spend = None
+        if isinstance(result, dict):
+            cost = _finite(result.get("total_cost_usd"))
+            usage = result.get("usage") if isinstance(result.get("usage"), dict) else {}
+            tokens = {
+                "input": int(_finite(usage.get("input_tokens")) or 0),
+                "output": int(_finite(usage.get("output_tokens")) or 0),
+                "cache_read": int(_finite(usage.get("cache_read_input_tokens")) or 0),
+                "cache_write": int(_finite(usage.get("cache_creation_input_tokens")) or 0),
+            }
+            if cost is not None or any(tokens.values()):
+                spend = {"cost_usd": cost, "tokens": tokens, "models": {}, "sessions": 1}
+        entry = {
+            "ts": round(time.time(), 3),
+            "started": round(started, 3),
+            "worker": os.environ.get("EPSILONERIDANI_WORKER_ID") or None,
+            "label": f"review-claude:{model}",
+            "rc": returncode,
+            "spend": spend,
+            "rate_limits": _claude_rate_limits(stream_lines, round(started, 3)) or None,
+        }
+        line = (json.dumps(entry, sort_keys=True, separators=(",", ":")) + "\n").encode()
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        # One write(2) to an O_APPEND descriptor: rubrics run in parallel, and so do sibling workers.
+        fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o644)
+        try:
+            os.write(fd, line)
+        finally:
+            os.close(fd)
+    except (OSError, TypeError, ValueError):
+        pass
+
+
 def run_claude(prompt, cwd, model, env):
     # --disable-slash-commands drops skills entirely; read-only tools only. With the clean HOME in
     # reviewer_env this keeps the review independent of the runner's personal claude config. Stream
@@ -410,6 +512,7 @@ def run_claude(prompt, cwd, model, env):
     # did, and the events before it are the only record of what the reviewer looked at. Parsing is
     # tolerant — a malformed line is counted and skipped, and a stream with no result event falls
     # through to the same parse_error path a malformed json document took.
+    started = time.time()
     r = sh(["claude", "-p", "--output-format", "stream-json", "--verbose", "--model", model,
             "--disable-slash-commands",
             # --tools RESTRICTS the built-in set; --allowedTools only grants permission within
@@ -433,7 +536,7 @@ def run_claude(prompt, cwd, model, env):
             "--allowedTools", *_REVIEW_TOOLS],
            cwd=cwd, env=env, stdin_text=prompt)
     out = {"returncode": r.returncode, "raw_stderr": r.stderr[-3000:]}
-    trace, meta = [], {}
+    trace, meta, d = [], {}, None
 
     try:
         # Keep the external stream parse inside this boundary so an unforeseen event shape becomes
@@ -462,6 +565,7 @@ def run_claude(prompt, cwd, model, env):
         # every persisted sink (PRIVATE_KEYS), and this says only what shape the stream had.
         out.update(text="", parse_error=str(e), tool_trace=trace, tool_trace_meta=meta,
                    raw_stdout=r.stdout[-3000:])
+    _journal_claude_call(r.stdout.splitlines(), d, r.returncode, started, model)
     return out
 
 

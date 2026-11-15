@@ -39,3 +39,4 @@ jobs:
       - run: python tests/test_tool_trace.py
       - run: python tests/test_run_agy.py
       - run: python tests/test_reviewer_no_shell.py
+      - run: python tests/test_spend_journal.py
