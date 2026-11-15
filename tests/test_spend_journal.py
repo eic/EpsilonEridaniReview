@@ -118,7 +118,13 @@ def main():
         run([{"type": "rate_limit_event", "rate_limit_info": {
                 "rateLimitType": "five_hour", "utilization": "lots", "resetsAt": float("nan")}},
              "not json", {"type": "rate_limit_event", "rate_limit_info": "nope"}], rc=1)
+        run([{"type": "rate_limit_event", "rate_limit_info": {
+                "rateLimitType": "seven_day", "utilization": 10 ** 1000, "resetsAt": 10 ** 1000}}],
+            rc=1)
         got = lines(journal)
+        check("an int too large for a float is dropped, not raised", len(got) == 2
+              and got[1].get("rate_limits") is None)
+        got = got[:1]
         check("no-result call still journaled", len(got) == 1)
         check("no-result call: spend null", got and got[0].get("spend") is None)
         check("malformed readings dropped", got and got[0].get("rate_limits") is None)

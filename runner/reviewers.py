@@ -2,7 +2,7 @@
 
 Run as a script (runner/ on sys.path), so imports are flat siblings, not package-relative."""
 
-import json, os, pathlib, re, shutil, sqlite3, subprocess, sys, tempfile, time
+import json, math, os, pathlib, re, shutil, sqlite3, subprocess, sys, tempfile, time
 from contextlib import closing
 from urllib.parse import quote
 
@@ -410,9 +410,15 @@ SPEND_JOURNAL_ENV = "EPSILONERIDANI_CLAUDE_SPEND_JOURNAL"
 
 
 def _finite(value):
+    """`value` as a finite float, or None. An int too large for a float is None too, not an
+    OverflowError: these values come from an external stream."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
-    return float(value) if value == value and abs(value) != float("inf") else None
+    try:
+        number = float(value)
+    except OverflowError:
+        return None
+    return number if math.isfinite(number) else None
 
 
 def _rate_limit_fields(info):
@@ -499,7 +505,7 @@ def _journal_claude_call(stream_lines, result, returncode, started, model):
             os.write(fd, line)
         finally:
             os.close(fd)
-    except (OSError, TypeError, ValueError):
+    except (OSError, TypeError, ValueError, OverflowError):
         pass
 
 
